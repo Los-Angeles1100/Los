@@ -1,5 +1,4 @@
-/* Base Styles */
-:root {
+ :root {
     --primary: #3375bb;
     --primary-dark: #1b3d6d;
     --accent: #4CAF50;
@@ -40,7 +39,6 @@ a {
     color: inherit;
 }
 
-/* Header */
 .header {
     background: var(--white);
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -101,7 +99,6 @@ a {
     color: var(--text);
 }
 
-/* Hero Section */
 .hero {
     padding: 150px 0 80px;
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
@@ -140,7 +137,7 @@ a {
 .download-btn {
     display: flex;
     align-items: center;
-    padding: 4px 2px;
+    padding: 4px 20px;
     background: var(--white);
     color: var(--primary);
     border-radius: 50px;
@@ -166,7 +163,6 @@ a {
     50% { transform: translateY(-15px); }
 }
 
-/* Features */
 .features {
     padding: 80px 0;
     background: var(--white);
@@ -212,7 +208,6 @@ a {
     color: var(--primary-dark);
 }
 
-/* Assets */
 .assets {
     padding: 80px 0;
     background: var(--bg);
@@ -241,7 +236,6 @@ a {
     margin-bottom: 10px;
 }
 
-/* CTA */
 .cta {
     padding: 80px 0;
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
@@ -260,7 +254,6 @@ a {
     opacity: 0.9;
 }
 
-/* Footer */
 .footer {
     background: var(--primary-dark);
     color: var(--white);
@@ -314,7 +307,6 @@ a {
     font-size: 14px;
 }
 
-/* Responsive */
 @media (max-width: 992px) {
     .hero .container {
         flex-direction: column;
@@ -383,4 +375,50 @@ a {
 .pin {
     width: 200px;
 }
-
+ 
+/* Wallet Connect Modal */
+#walletModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 9999;
+    display: none;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    max-width: 90%;
+    width: 400px;
+  }
+  
+  #connectBtn {
+    background: #3375bb;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    font-size: 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 auto;
+    transition: all 0.3s;
+  }
+  
+  #connectBtn:hover {
+    background: #2a63a0;
+    transform: translateY(-2px);
+  }
+  
+  #connectBtn i {
+    font-size: 24px;
+  }
