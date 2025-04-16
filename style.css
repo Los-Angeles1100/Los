@@ -141,6 +141,8 @@ a {
 
 .hero-image {
     animation: float 3s ease-in-out infinite;
+    margin-left: 40px;
+
 }
 
 @keyframes float {
@@ -424,6 +426,7 @@ a {
   }
 
   .box {
+    margin-left: 20px;
     background-color: rgba(255, 255, 255, 0.05);
     padding: 40px 30px;
     border-radius: 16px;
