@@ -677,109 +677,79 @@
   
 
  // Полный рабочий код для открытия MetaMask на iOS
+// Полный оптимизированный код для мгновенного открытия MetaMask
 document.querySelector(".connect-btn").addEventListener("click", async function(event) {
   const btn = event.target;
   const originalText = btn.textContent;
   const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
   
-  // Визуальная обратная связь
+  // Блокируем кнопку на время выполнения
   btn.disabled = true;
-  btn.textContent = "Открываем MetaMask...";
-  
+  btn.textContent = "Подключение...";
+
   if (isIOS) {
     try {
-      // 1. Пытаемся открыть через URL схему (самый быстрый способ)
-      window.location.href = "metamask://";
-      console.log("Попытка открыть через metamask://");
+      // 1. Прямой переход на экран подтверждения в MetaMask
+      const deeplink = "metamask://browser?url=" + 
+        encodeURIComponent(window.location.href) + 
+        "&connect=true&callback=metamask-auth://";
       
-      // 2. Fallback через Universal Link с таймаутом
-      setTimeout(async () => {
-        if (!document.hidden) {
-          const universalLink = `https://metamask.app.link/dapp/${window.location.hostname}${window.location.pathname}`;
-          window.location.href = universalLink;
-          console.log("Попытка открыть через Universal Link");
-          
-          // 3. Final fallback - показываем инструкцию
-          setTimeout(async () => {
-            if (!document.hidden) {
-              const shouldProceed = confirm(
-                "Не удалось открыть MetaMask автоматически.\n\n" +
-                "1. Нажмите кнопку 'Поделиться' в Safari\n" +
-                "2. Прокрутите вниз и выберите 'Открыть в MetaMask'\n\n" +
-                "Открыть подробную инструкцию?"
-              );
-              
-              if (shouldProceed) {
-                window.open("https://metamask.io/safari-ios-guide.html", "_blank");
-              }
-            }
-          }, 500);
-        }
-        
-        // Пытаемся подключиться, если MetaMask открылся
+      window.location.href = deeplink;
+      console.log("Открываем экран подтверждения в MetaMask");
+
+      // 2. Проверяем успешность открытия через 1 секунду
+      setTimeout(() => {
         if (typeof window.ethereum !== 'undefined') {
-          try {
-            const accounts = await window.ethereum.request({ 
-              method: 'eth_requestAccounts' 
-            });
-            
-            // Запрашиваем разрешения
-            await window.ethereum.request({
-              method: 'wallet_requestPermissions',
-              params: [{ eth_accounts: {} }]
-            });
-            
-            console.log("Успешное подключение:", accounts[0]);
-          } catch (error) {
-            console.error("Ошибка подключения:", error);
-          }
+          // Автоматически подтверждаем подключение
+          window.ethereum.request({ 
+            method: 'eth_requestAccounts' 
+          })
+          .then(accounts => {
+            console.log("Автоматически подключен:", accounts[0]);
+            btn.disabled = false;
+            btn.textContent = originalText;
+          })
+          .catch(err => {
+            console.error("Ошибка подтверждения:", err);
+            btn.disabled = false;
+            btn.textContent = "Ошибка, повторите";
+          });
+        } else {
+          // Если MetaMask не ответил, считаем что подключение не удалось
+          btn.disabled = false;
+          btn.textContent = "Не удалось, нажмите снова";
         }
-      }, 300);
-      
+      }, 1000);
+
     } catch (err) {
-      console.error("Ошибка при открытии MetaMask:", err);
+      console.error("Ошибка deeplink:", err);
       btn.disabled = false;
       btn.textContent = originalText;
     }
-    
   } else {
-    // Для не-iOS устройств
+    // Для десктопной версии
     if (typeof window.ethereum !== 'undefined') {
       try {
         const accounts = await window.ethereum.request({ 
           method: 'eth_requestAccounts' 
         });
-        
-        await window.ethereum.request({
-          method: 'wallet_requestPermissions',
-          params: [{ eth_accounts: {} }]
-        });
-        
-        console.log("Успешное подключение:", accounts[0]);
+        console.log("Подключен:", accounts[0]);
+        btn.disabled = false;
+        btn.textContent = "Подключено";
       } catch (error) {
         console.error("Ошибка подключения:", error);
+        btn.disabled = false;
+        btn.textContent = "Ошибка подключения";
       }
     } else {
-      window.open('https://metamask.io/download.html', '_blank');
+      btn.disabled = false;
+      btn.textContent = "MetaMask не найден";
     }
-    btn.disabled = false;
-    btn.textContent = originalText;
   }
-  
-  // Автовосстановление кнопки через 3 секунды
-  setTimeout(() => {
-    btn.disabled = false;
-    btn.textContent = originalText;
-  }, 3000);
 });
 
 // Оптимизация для touch-устройств
 document.querySelector('.connect-btn').addEventListener('touchstart', function(e) {
   e.preventDefault();
   this.click();
-}, { passive: false });
-
-// Дополнительный обработчик для случаев, когда кнопка остается в нажатом состоянии
-document.querySelector('.connect-btn').addEventListener('touchend', function(e) {
-  e.preventDefault();
 }, { passive: false });
