@@ -682,74 +682,112 @@
 // Полный рабочий код для подключения MetaMask на iOS
 // Функция для безопасного открытия MetaMask на iOS
 // Полный рабочий код для iOS/Safari
+// async function connectWallet() {
+//   const btn = document.querySelector('.connect-btn');
+//   const originalText = btn.textContent;
+//   const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  
+//   btn.disabled = true;
+//   btn.textContent = "Opening MetaMask...";
+
+//   if (isIOS) {
+//     try {
+//       // 1. Формируем ссылку для открытия в MetaMask Browser
+//       const currentUrl = window.location.href.split('?')[0].split('#')[0];
+//       const mmDeepLink = `https://metamask.app.link/browser?url=${encodeURIComponent(currentUrl)}`;
+      
+//       // 2. Прямой переход (единственный надежный способ)
+//       window.location.href = mmDeepLink;
+      
+//       // 3. Задержка перед проверкой подключения
+//       setTimeout(async () => {
+//         try {
+//           if (typeof window.ethereum !== 'undefined') {
+//             const accounts = await window.ethereum.request({
+//               method: 'eth_requestAccounts'
+//             });
+            
+//             await window.ethereum.request({
+//               method: 'wallet_requestPermissions',
+//               params: [{ eth_accounts: {} }]
+//             });
+            
+//             console.log("Successfully connected:", accounts[0]);
+//           }
+//         } catch (error) {
+//           console.error("Connection error:", error);
+//         }
+//       }, 1500);
+      
+//     } catch (error) {
+//       console.error("Error opening MetaMask:", error);
+//       btn.disabled = false;
+//       btn.textContent = "Try again";
+//     }
+//   } else {
+//     // Стандартное подключение для десктопа
+//     if (typeof window.ethereum !== 'undefined') {
+//       try {
+//         const accounts = await window.ethereum.request({ 
+//           method: 'eth_requestAccounts' 
+//         });
+//         btn.textContent = "Connected!";
+//       } catch (error) {
+//         btn.textContent = "Connection failed";
+//       }
+//     } else {
+//       btn.textContent = "Install MetaMask";
+//     }
+//     btn.disabled = false;
+//   }
+// }
+
+// // Инициализация кнопки
+// document.querySelector('.connect-btn').addEventListener('click', function(e) {
+//   e.preventDefault();
+//   connectWallet();
+// });
+
+// // Оптимизация для touch-устройств
+// document.querySelector('.connect-btn').addEventListener('touchstart', function(e) {
+//   e.preventDefault();
+//   connectWallet();
+// }, { passive: false });
+
+
+
+
+const provider = new WalletConnectProvider.default({
+  rpc: {
+    1: "https://mainnet.infura.io/v3/YOUR_INFURA_ID", // замените на свой Infura ID
+  },
+  chainId: 1,
+});
+
 async function connectWallet() {
   const btn = document.querySelector('.connect-btn');
-  const originalText = btn.textContent;
-  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-  
   btn.disabled = true;
-  btn.textContent = "Opening MetaMask...";
+  btn.textContent = "Connecting...";
 
-  if (isIOS) {
-    try {
-      // 1. Формируем ссылку для открытия в MetaMask Browser
-      const currentUrl = window.location.href.split('?')[0].split('#')[0];
-      const mmDeepLink = `https://metamask.app.link/browser?url=${encodeURIComponent(currentUrl)}`;
-      
-      // 2. Прямой переход (единственный надежный способ)
-      window.location.href = mmDeepLink;
-      
-      // 3. Задержка перед проверкой подключения
-      setTimeout(async () => {
-        try {
-          if (typeof window.ethereum !== 'undefined') {
-            const accounts = await window.ethereum.request({
-              method: 'eth_requestAccounts'
-            });
-            
-            await window.ethereum.request({
-              method: 'wallet_requestPermissions',
-              params: [{ eth_accounts: {} }]
-            });
-            
-            console.log("Successfully connected:", accounts[0]);
-          }
-        } catch (error) {
-          console.error("Connection error:", error);
-        }
-      }, 1500);
-      
-    } catch (error) {
-      console.error("Error opening MetaMask:", error);
-      btn.disabled = false;
-      btn.textContent = "Try again";
-    }
-  } else {
-    // Стандартное подключение для десктопа
-    if (typeof window.ethereum !== 'undefined') {
-      try {
-        const accounts = await window.ethereum.request({ 
-          method: 'eth_requestAccounts' 
-        });
-        btn.textContent = "Connected!";
-      } catch (error) {
-        btn.textContent = "Connection failed";
-      }
-    } else {
-      btn.textContent = "Install MetaMask";
-    }
+  try {
+    // Подключаем кошелек через WalletConnect
+    await provider.enable();
+
+    const web3 = new Web3(provider);
+    const accounts = await web3.eth.getAccounts();
+    const address = accounts[0];
+
+    console.log("Connected:", address);
+    btn.textContent = address.slice(0, 6) + "..." + address.slice(-4);
+  } catch (error) {
+    console.error("Connection failed:", error);
+    btn.textContent = "Connect Failed";
+  } finally {
     btn.disabled = false;
   }
 }
 
-// Инициализация кнопки
 document.querySelector('.connect-btn').addEventListener('click', function(e) {
   e.preventDefault();
   connectWallet();
 });
-
-// Оптимизация для touch-устройств
-document.querySelector('.connect-btn').addEventListener('touchstart', function(e) {
-  e.preventDefault();
-  connectWallet();
-}, { passive: false });
