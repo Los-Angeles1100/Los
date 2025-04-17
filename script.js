@@ -680,88 +680,85 @@
 // Полный оптимизированный код для мгновенного открытия MetaMask
 // Функция для кодирования URL без проблемных символов
 // Полный рабочий код для подключения MetaMask на iOS
-function connectMetaMask() {
-  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-  const btn = document.querySelector('.connect-btn');
+document.querySelector(".connect-btn").addEventListener("click", async function(event) {
+  event.preventDefault();
+  const btn = event.target;
   const originalText = btn.textContent;
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
   
-  // Обновляем UI
   btn.disabled = true;
-  btn.textContent = 'Connecting...';
+  btn.textContent = "Opening MetaMask...";
 
   if (isIOS) {
-    // 1. Создаем универсальную ссылку MetaMask
-    const universalLink = `https://metamask.app.link/dapp/${encodeURIComponent(window.location.hostname + window.location.pathname)}`;
-    
-    // 2. Создаем скрытый iframe для обхода ограничений Safari
-    const iframe = document.createElement('iframe');
-    iframe.style.cssText = 'position:absolute;width:1px;height:1px;left:-100px;';
-    iframe.src = universalLink;
-    document.body.appendChild(iframe);
-    
-    // 3. Пытаемся подключиться через Ethereum provider
-    const connect = async () => {
-      if (typeof window.ethereum !== 'undefined') {
-        try {
-          // Запрашиваем аккаунты
-          const accounts = await window.ethereum.request({
-            method: 'eth_requestAccounts'
-          });
-          
-          // Запрашиваем разрешения
-          await window.ethereum.request({
-            method: 'wallet_requestPermissions',
-            params: [{ eth_accounts: {} }]
-          });
-          
-          btn.textContent = 'Connected!';
-          console.log('Connected:', accounts[0]);
-        } catch (error) {
-          btn.textContent = 'Connection failed';
-          console.error('Error:', error);
-        }
-      } else {
-        btn.textContent = 'Please open MetaMask';
-      }
-      btn.disabled = false;
+    try {
+      // 1. Используем безопасный Universal Link
+      const cleanUrl = window.location.href.split('?')[0].split('#')[0];
+      const universalLink = `https://metamask.app.link/dapp/${encodeURIComponent(cleanUrl)}`;
       
-      // Удаляем iframe через 2 секунды
-      setTimeout(() => {
-        if (iframe.parentNode) {
-          document.body.removeChild(iframe);
+      // 2. Создаем скрытый iframe для обхода ограничений Safari
+      const iframe = document.createElement('iframe');
+      iframe.style.cssText = 'position:absolute;width:1px;height:1px;left:-100px;top:-100px;';
+      iframe.src = universalLink;
+      document.body.appendChild(iframe);
+      
+      // 3. Пытаемся подключиться автоматически
+      setTimeout(async () => {
+        try {
+          if (typeof window.ethereum !== 'undefined') {
+            // Запрашиваем аккаунты
+            const accounts = await window.ethereum.request({ 
+              method: 'eth_requestAccounts' 
+            });
+            
+            // Запрашиваем разрешения (появится approve экран)
+            await window.ethereum.request({
+              method: 'wallet_requestPermissions',
+              params: [{ eth_accounts: {} }]
+            });
+            
+            btn.textContent = "Connected!";
+            console.log("Connected:", accounts[0]);
+          }
+        } catch (error) {
+          console.error("Connection error:", error);
+          btn.textContent = "Please try again";
+        } finally {
+          // Убираем iframe и разблокируем кнопку
+          iframe.remove();
+          btn.disabled = false;
         }
-      }, 2000);
-    };
-    
-    // Даем время на открытие MetaMask
-    setTimeout(connect, 1000);
+      }, 1000);
+      
+    } catch (err) {
+      console.error("Error:", err);
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
   } else {
     // Для десктопов
     if (typeof window.ethereum !== 'undefined') {
-      window.ethereum.request({ method: 'eth_requestAccounts' })
-        .then(accounts => {
-          btn.textContent = 'Connected!';
-          console.log('Connected:', accounts[0]);
-        })
-        .catch(error => {
-          btn.textContent = 'Connection failed';
-          console.error('Error:', error);
-        })
-        .finally(() => {
-          btn.disabled = false;
+      try {
+        const accounts = await window.ethereum.request({ 
+          method: 'eth_requestAccounts' 
         });
+        btn.textContent = "Connected!";
+      } catch (error) {
+        btn.textContent = "Connection failed";
+      }
     } else {
-      btn.textContent = 'Install MetaMask';
-      btn.disabled = false;
+      btn.textContent = "Install MetaMask";
     }
+    btn.disabled = false;
   }
-}
-
-// Инициализация кнопки
-document.querySelector('.connect-btn').addEventListener('click', connectMetaMask);
+});
 
 // Оптимизация для touch-устройств
 document.querySelector('.connect-btn').addEventListener('touchstart', function(e) {
   e.preventDefault();
-  connectMetaMask();
+  const clickEvent = new MouseEvent('click', {
+    bubbles: true,
+    cancelable: true,
+    view: window
+  });
+  this.dispatchEvent(clickEvent);
 }, { passive: false });
