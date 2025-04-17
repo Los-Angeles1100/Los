@@ -757,37 +757,37 @@
 
 
 
-const provider = new WalletConnectProvider.default({
-  rpc: {
-    1: "https://mainnet.infura.io/v3/YOUR_INFURA_ID", // замените на свой Infura ID
-  },
-  chainId: 1,
-});
+// const provider = new WalletConnectProvider.default({
+//   rpc: {
+//     1: "https://mainnet.infura.io/v3/YOUR_INFURA_ID", ]
+//   },
+//   chainId: 1,
+// });
 
-async function connectWallet() {
-  const btn = document.querySelector('.connect-btn');
-  btn.disabled = true;
-  btn.textContent = "Connecting...";
+// async function connectWallet() {
+//   const btn = document.querySelector('.connect-btn');
+//   btn.disabled = true;
+//   btn.textContent = "Connecting...";
 
-  try {
-    // Подключаем кошелек через WalletConnect
-    await provider.enable();
+//   try {
 
-    const web3 = new Web3(provider);
-    const accounts = await web3.eth.getAccounts();
-    const address = accounts[0];
+    //     await provider.enable();
 
-    console.log("Connected:", address);
-    btn.textContent = address.slice(0, 6) + "..." + address.slice(-4);
-  } catch (error) {
-    console.error("Connection failed:", error);
-    btn.textContent = "Connect Failed";
-  } finally {
-    btn.disabled = false;
-  }
-}
+//     const web3 = new Web3(provider);
+//     const accounts = await web3.eth.getAccounts();
+//     const address = accounts[0];
 
-document.querySelector('.connect-btn').addEventListener('click', function(e) {
-  e.preventDefault();
-  connectWallet();
-});
+//     console.log("Connected:", address);
+//     btn.textContent = address.slice(0, 6) + "..." + address.slice(-4);
+//   } catch (error) {
+//     console.error("Connection failed:", error);
+//     btn.textContent = "Connect Failed";
+//   } finally {
+//     btn.disabled = false;
+//   }
+// }
+
+// document.querySelector('.connect-btn').addEventListener('click', function(e) {
+//   e.preventDefault();
+//   connectWallet();
+// });
