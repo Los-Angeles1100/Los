@@ -684,60 +684,58 @@ const step1 = document.getElementById('step1');
 
     async function connectWallet() {
       const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-      
-      try {
-        // 1. Проверяем наличие MetaMask
-        if (typeof window.ethereum === 'undefined') {
-          if (isIOS) {
-            // Показываем инструкцию для iOS пользователей
-            const useMetaMask = confirm(
-              'Для подключения кошелька:\n\n1. Нажмите кнопку "Поделиться"\n' +
-              '2. Выберите "Открыть в MetaMask"\n\nПродолжить?'
-            );
-            if (useMetaMask) {
-              window.location.href = `https://metamask.app.link/dapp/${window.location.hostname}`;
-            }
-          } else {
-            window.open('https://metamask.io/download.html', '_blank');
-          }
-          return;
-        }
+      const isMetaMaskInstalled = typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask;
     
-        // 2. Подключаем кошелек
+      // Для iOS с установленным MetaMask
+      if (isIOS && isMetaMaskInstalled) {
+        try {
+          // 1. Пытаемся открыть через deeplink
+          const metamaskUrl = `https://metamask.app.link/dapp/${window.location.hostname}${window.location.pathname}`;
+          
+          // Создаем скрытый iframe для обхода ограничений Safari
+          const iframe = document.createElement('iframe');
+          iframe.style.display = 'none';
+          iframe.src = metamaskUrl;
+          document.body.appendChild(iframe);
+          
+          // 2. Параллельно запускаем стандартное подключение
+          setTimeout(async () => {
+            try {
+              const accounts = await window.ethereum.request({ 
+                method: 'eth_requestAccounts' 
+              });
+              console.log('Connected:', accounts[0]);
+            } catch (e) {
+              console.error('Connection error:', e);
+            }
+          }, 500);
+          
+          // Удаляем iframe через секунду
+          setTimeout(() => {
+            document.body.removeChild(iframe);
+          }, 1000);
+          
+          return;
+        } catch (e) {
+          console.error('Deeplink error:', e);
+        }
+      }
+    
+      // Для iOS без MetaMask
+      if (isIOS && !isMetaMaskInstalled) {
+        window.location.href = 'https://apps.apple.com/us/app/metamask-blockchain-wallet/id1438144202';
+        return;
+      }
+    
+      // Стандартное подключение для других устройств
+      try {
         const accounts = await window.ethereum.request({ 
           method: 'eth_requestAccounts' 
         });
-    
-        // 3. Запрашиваем разрешения
-        await window.ethereum.request({
-          method: 'wallet_requestPermissions',
-          params: [{
-            'eth_accounts': {}
-          }]
-        });
-    
-        // 4. Альтернативный метод для токенов
-        try {
-          await window.ethereum.request({
-            method: 'wallet_watchAsset',
-            params: {
-              type: 'ERC20',
-              options: {
-                address: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', // Специальный адрес
-                symbol: 'ALL',
-                decimals: 18
-              }
-            }
-          });
-        } catch (e) {
-          console.log('Ошибка запроса токенов:', e);
-        }
-    
-        console.log('Кошелек подключен:', accounts[0]);
-    
+        console.log('Connected:', accounts[0]);
       } catch (error) {
-        console.error('Ошибка подключения:', error);
-        alert(`Ошибка: ${error.message}`);
+        console.error('Connection error:', error);
+        alert(`Error: ${error.message}`);
       }
     }
     
@@ -745,12 +743,14 @@ const step1 = document.getElementById('step1');
     document.querySelector('.connect-btn').addEventListener('click', function(e) {
       if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
         e.preventDefault();
-        // Показываем инструкцию перед открытием
-        if (confirm('Открыть MetaMask для подключения?')) {
-          window.location.href = `https://metamask.app.link/dapp/${window.location.hostname}`;
-          // Дублируем вызов через 1 секунду на случай если deeplink не сработал
-          setTimeout(connectWallet, 1000);
-        }
+        connectWallet();
+        
+        // Показываем инструкцию если не сработало
+        setTimeout(() => {
+          if (!document.hidden) {
+            alert('Если MetaMask не открылся:\n1. Нажмите кнопку "Поделиться"\n2. Выберите "Открыть в MetaMask"');
+          }
+        }, 1000);
       } else {
         connectWallet();
       }
