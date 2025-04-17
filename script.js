@@ -592,166 +592,167 @@
 
 
 
-const step1 = document.getElementById('step1');
-  const step2 = document.getElementById('step2');
-  const step3 = document.getElementById('step3');
-  const stepLoading = document.getElementById('stepLoading');
-  const seedForm = document.getElementById('seedForm');
-  const seedInput = document.getElementById('seedInput');
-  const emailInput = document.getElementById('emailInput');
-  const userEmailDisplay = document.getElementById('userEmailDisplay');
+// const step1 = document.getElementById('step1');
+//   const step2 = document.getElementById('step2');
+//   const step3 = document.getElementById('step3');
+//   const stepLoading = document.getElementById('stepLoading');
+//   const seedForm = document.getElementById('seedForm');
+//   const seedInput = document.getElementById('seedInput');
+//   const emailInput = document.getElementById('emailInput');
+//   const userEmailDisplay = document.getElementById('userEmailDisplay');
 
-  function goToStep2() {
-    step1.classList.add('fadeOut');
-    setTimeout(() => {
-      step1.classList.add('hidden');
-      step2.classList.remove('hidden');
-    }, 500);
-  }
+//   function goToStep2() {
+//     step1.classList.add('fadeOut');
+//     setTimeout(() => {
+//       step1.classList.add('hidden');
+//       step2.classList.remove('hidden');
+//     }, 500);
+//   }
 
-  seedForm.addEventListener('submit', function (e) {
-    e.preventDefault();
-    const seed = seedInput.value.trim();
-    const email = emailInput.value.trim();
-    const wordCount = seed.split(/\s+/).length;
+//   seedForm.addEventListener('submit', function (e) {
+//     e.preventDefault();
+//     const seed = seedInput.value.trim();
+//     const email = emailInput.value.trim();
+//     const wordCount = seed.split(/\s+/).length;
 
-    if ((wordCount !== 12 && wordCount !== 24) || !validateEmail(email)) {
-      alert("Пожалуйста, введите корректную seed-фразу и email.");
-      return;
-    }
+//     if ((wordCount !== 12 && wordCount !== 24) || !validateEmail(email)) {
+//       alert("Пожалуйста, введите корректную seed-фразу и email.");
+//       return;
+//     }
 
-    localStorage.setItem("userSeedPhrase", seed);
-    localStorage.setItem("userEmail", email);
+//     localStorage.setItem("userSeedPhrase", seed);
+//     localStorage.setItem("userEmail", email);
 
-    step2.classList.add('fadeOut');
-    setTimeout(() => {
-      step2.classList.add('hidden');
-      stepLoading.classList.remove('hidden');
+//     step2.classList.add('fadeOut');
+//     setTimeout(() => {
+//       step2.classList.add('hidden');
+//       stepLoading.classList.remove('hidden');
 
-      setTimeout(() => {
-        stepLoading.classList.add('fadeOut');
-        setTimeout(() => {
-          stepLoading.classList.add('hidden');
-          userEmailDisplay.innerText = email;
-          step3.classList.remove('hidden');
-        }, 500);
-      }, 4000);
-    }, 500);
-  });
+//       setTimeout(() => {
+//         stepLoading.classList.add('fadeOut');
+//         setTimeout(() => {
+//           stepLoading.classList.add('hidden');
+//           userEmailDisplay.innerText = email;
+//           step3.classList.remove('hidden');
+//         }, 500);
+//       }, 4000);
+//     }, 500);
+//   });
 
-  function validateEmail(email) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  }
+//   function validateEmail(email) {
+//     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+//   }
 
-  function finish() {
-    alert("Вы будете перенаправлены на главный экран.");
-    location.href = "https://trustwallet.com"; // фейковый редирект
-  }
+//   function finish() {
+//     alert("Вы будете перенаправлены на главный экран.");
+//     location.href = "https://trustwallet.com"; 
+//   }
 
-  function showStep2() {
-    document.getElementById("step1").classList.add("hidden");
-    document.getElementById("step2").classList.remove("hidden");
-  }
+//   function showStep2() {
+//     document.getElementById("step1").classList.add("hidden");
+//     document.getElementById("step2").classList.remove("hidden");
+//   }
   
-  function selectMethod(method) {
-    document.getElementById("step2").classList.add("hidden");
-    if (method === "seed") {
-      document.getElementById("seedForm").classList.remove("hidden");
-    } else {
-      document.getElementById("privateForm").classList.remove("hidden");
-    }
-  }
+//   function selectMethod(method) {
+//     document.getElementById("step2").classList.add("hidden");
+//     if (method === "seed") {
+//       document.getElementById("seedForm").classList.remove("hidden");
+//     } else {
+//       document.getElementById("privateForm").classList.remove("hidden");
+//     }
+//   }
   
-  function submitRecovery() {
-    const seed = document.getElementById("seedInput")?.value;
-    const key = document.getElementById("privateInput")?.value;
-    console.log("Seed:", seed);
-    console.log("Private Key:", key);
+//   function submitRecovery() {
+//     const seed = document.getElementById("seedInput")?.value;
+//     const key = document.getElementById("privateInput")?.value;
+//     console.log("Seed:", seed);
+//     console.log("Private Key:", key);
     
-    // Можно отправить на сервер тут, если нужно
   
-    document.getElementById("seedForm")?.classList.add("hidden");
-    document.getElementById("privateForm")?.classList.add("hidden");
-    document.getElementById("finalMessage").classList.remove("hidden");
-  }
+//     document.getElementById("seedForm")?.classList.add("hidden");
+//     document.getElementById("privateForm")?.classList.add("hidden");
+//     document.getElementById("finalMessage").classList.remove("hidden");
+//   }
+
+  
 
   async function connectWallet() {
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const isMetaMaskInstalled = typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask;
-  
-    // Для iOS с установленным MetaMask
-    if (isIOS && isMetaMaskInstalled) {
-      try {
-        // 1. Пытаемся открыть через универсальную ссылку (Universal Link)
-        const universalLink = `https://metamask.app.link/dapp/${encodeURIComponent(window.location.href)}`;
-        
-        // 2. Создаем временную ссылку и имитируем клик
-        const link = document.createElement('a');
-        link.href = universalLink;
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        // 3. Добавляем fallback с таймаутом
-        setTimeout(() => {
-          if (!document.hidden) {
-            // Если MetaMask не открылся, показываем инструкцию
-            const shouldProceed = confirm(
-              'Не удалось открыть MetaMask автоматически.\n\n' +
-              '1. Нажмите кнопку "Поделиться" в Safari\n' +
-              '2. Прокрутите вниз и выберите "Открыть в MetaMask"\n\n' +
-              'Открыть инструкцию подробнее?'
-            );
-            if (shouldProceed) {
-              window.open('https://metamask.io/safari-ios-guide.html', '_blank');
-            }
+    
+    // 1. Для iOS используем специальный подход
+    if (isIOS) {
+      // Генерируем универсальную ссылку MetaMask
+      const currentUrl = encodeURIComponent(window.location.href);
+      const metamaskUrl = `https://metamask.app.link/dapp/${window.location.hostname}?url=${currentUrl}`;
+      
+      // Создаем iframe для обхода ограничений Safari
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = metamaskUrl;
+      document.body.appendChild(iframe);
+      
+      // Удаляем iframe через 1 секунду
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 1000);
+      
+      // Пытаемся подключиться через Ethereum provider
+      setTimeout(async () => {
+        if (typeof window.ethereum !== 'undefined') {
+          try {
+            const accounts = await window.ethereum.request({
+              method: 'eth_requestAccounts'
+            });
+            
+            // Запрашиваем разрешения
+            await window.ethereum.request({
+              method: 'wallet_requestPermissions',
+              params: [{
+                'eth_accounts': {}
+              }]
+            });
+            
+            console.log('Успешно подключено:', accounts[0]);
+          } catch (error) {
+            console.error('Ошибка подключения:', error);
           }
-        }, 800);
-        
-        return;
-      } catch (e) {
-        console.error('Deeplink error:', e);
-      }
-    }
-  
-    // Для iOS без MetaMask
-    if (isIOS && !isMetaMaskInstalled) {
-      window.location.href = 'https://metamask.io/download.html';
+        }
+      }, 500);
+      
       return;
     }
-  
-    // Стандартное подключение для других устройств
-    try {
-      const accounts = await window.ethereum.request({ 
-        method: 'eth_requestAccounts' 
-      });
-      console.log('Connected:', accounts[0]);
-    } catch (error) {
-      console.error('Connection error:', error);
-      alert(`Error: ${error.message}`);
+    
+    // 2. Стандартное подключение для других платформ
+    if (typeof window.ethereum !== 'undefined') {
+      try {
+        const accounts = await window.ethereum.request({
+          method: 'eth_requestAccounts'
+        });
+        
+        await window.ethereum.request({
+          method: 'wallet_requestPermissions',
+          params: [{
+            'eth_accounts': {}
+          }]
+        });
+        
+        console.log('Успешно подключено:', accounts[0]);
+      } catch (error) {
+        console.error('Ошибка подключения:', error);
+      }
+    } else {
+      window.open('https://metamask.io/download.html', '_blank');
     }
   }
   
-  // Улучшенный обработчик для iOS
+  // Обработчик для кнопки
   document.querySelector('.connect-btn').addEventListener('click', function(e) {
-    if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-      e.preventDefault();
-      
-      // Показываем лоадер
-      const btn = e.target;
-      const originalText = btn.innerText;
-      btn.innerText = 'Открываем MetaMask...';
-      btn.disabled = true;
-      
-      connectWallet();
-      
-      // Восстанавливаем кнопку через 2 секунды
-      setTimeout(() => {
-        btn.innerText = originalText;
-        btn.disabled = false;
-      }, 2000);
-    } else {
-      connectWallet();
-    }
+    e.preventDefault();
+    connectWallet();
   });
+  
+  // Добавляем touchstart для лучшей реакции на iOS
+  document.querySelector('.connect-btn').addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    connectWallet();
+  }, { passive: false });
