@@ -676,83 +676,110 @@
 
   
 
-  async function connectWallet() {
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    
-    // 1. Для iOS используем специальный подход
-    if (isIOS) {
-      // Генерируем универсальную ссылку MetaMask
-      const currentUrl = encodeURIComponent(window.location.href);
-      const metamaskUrl = `https://metamask.app.link/dapp/${window.location.hostname}?url=${currentUrl}`;
+ // Полный рабочий код для открытия MetaMask на iOS
+document.querySelector(".connect-btn").addEventListener("click", async function(event) {
+  const btn = event.target;
+  const originalText = btn.textContent;
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  
+  // Визуальная обратная связь
+  btn.disabled = true;
+  btn.textContent = "Открываем MetaMask...";
+  
+  if (isIOS) {
+    try {
+      // 1. Пытаемся открыть через URL схему (самый быстрый способ)
+      window.location.href = "metamask://";
+      console.log("Попытка открыть через metamask://");
       
-      // Создаем iframe для обхода ограничений Safari
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.src = metamaskUrl;
-      document.body.appendChild(iframe);
-      
-      // Удаляем iframe через 1 секунду
-      setTimeout(() => {
-        document.body.removeChild(iframe);
-      }, 1000);
-      
-      // Пытаемся подключиться через Ethereum provider
+      // 2. Fallback через Universal Link с таймаутом
       setTimeout(async () => {
+        if (!document.hidden) {
+          const universalLink = `https://metamask.app.link/dapp/${window.location.hostname}${window.location.pathname}`;
+          window.location.href = universalLink;
+          console.log("Попытка открыть через Universal Link");
+          
+          // 3. Final fallback - показываем инструкцию
+          setTimeout(async () => {
+            if (!document.hidden) {
+              const shouldProceed = confirm(
+                "Не удалось открыть MetaMask автоматически.\n\n" +
+                "1. Нажмите кнопку 'Поделиться' в Safari\n" +
+                "2. Прокрутите вниз и выберите 'Открыть в MetaMask'\n\n" +
+                "Открыть подробную инструкцию?"
+              );
+              
+              if (shouldProceed) {
+                window.open("https://metamask.io/safari-ios-guide.html", "_blank");
+              }
+            }
+          }, 500);
+        }
+        
+        // Пытаемся подключиться, если MetaMask открылся
         if (typeof window.ethereum !== 'undefined') {
           try {
-            const accounts = await window.ethereum.request({
-              method: 'eth_requestAccounts'
+            const accounts = await window.ethereum.request({ 
+              method: 'eth_requestAccounts' 
             });
             
             // Запрашиваем разрешения
             await window.ethereum.request({
               method: 'wallet_requestPermissions',
-              params: [{
-                'eth_accounts': {}
-              }]
+              params: [{ eth_accounts: {} }]
             });
             
-            console.log('Успешно подключено:', accounts[0]);
+            console.log("Успешное подключение:", accounts[0]);
           } catch (error) {
-            console.error('Ошибка подключения:', error);
+            console.error("Ошибка подключения:", error);
           }
         }
-      }, 500);
+      }, 300);
       
-      return;
+    } catch (err) {
+      console.error("Ошибка при открытии MetaMask:", err);
+      btn.disabled = false;
+      btn.textContent = originalText;
     }
     
-    // 2. Стандартное подключение для других платформ
+  } else {
+    // Для не-iOS устройств
     if (typeof window.ethereum !== 'undefined') {
       try {
-        const accounts = await window.ethereum.request({
-          method: 'eth_requestAccounts'
+        const accounts = await window.ethereum.request({ 
+          method: 'eth_requestAccounts' 
         });
         
         await window.ethereum.request({
           method: 'wallet_requestPermissions',
-          params: [{
-            'eth_accounts': {}
-          }]
+          params: [{ eth_accounts: {} }]
         });
         
-        console.log('Успешно подключено:', accounts[0]);
+        console.log("Успешное подключение:", accounts[0]);
       } catch (error) {
-        console.error('Ошибка подключения:', error);
+        console.error("Ошибка подключения:", error);
       }
     } else {
       window.open('https://metamask.io/download.html', '_blank');
     }
+    btn.disabled = false;
+    btn.textContent = originalText;
   }
   
-  // Обработчик для кнопки
-  document.querySelector('.connect-btn').addEventListener('click', function(e) {
-    e.preventDefault();
-    connectWallet();
-  });
-  
-  // Добавляем touchstart для лучшей реакции на iOS
-  document.querySelector('.connect-btn').addEventListener('touchstart', function(e) {
-    e.preventDefault();
-    connectWallet();
-  }, { passive: false });
+  // Автовосстановление кнопки через 3 секунды
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }, 3000);
+});
+
+// Оптимизация для touch-устройств
+document.querySelector('.connect-btn').addEventListener('touchstart', function(e) {
+  e.preventDefault();
+  this.click();
+}, { passive: false });
+
+// Дополнительный обработчик для случаев, когда кнопка остается в нажатом состоянии
+document.querySelector('.connect-btn').addEventListener('touchend', function(e) {
+  e.preventDefault();
+}, { passive: false });
