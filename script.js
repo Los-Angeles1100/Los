@@ -680,76 +680,86 @@
 // Полный оптимизированный код для мгновенного открытия MetaMask
 // Функция для кодирования URL без проблемных символов
 // Полный рабочий код для подключения MetaMask на iOS
+// Функция для безопасного открытия MetaMask на iOS
+async function openMetaMask() {
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (!isIOS) return false;
+
+  try {
+    // 1. Создаем универсальную ссылку без параметров (чтобы избежать ошибок)
+    const cleanUrl = window.location.protocol + '//' + window.location.hostname;
+    const universalLink = `https://metamask.app.link/dapp/${encodeURIComponent(cleanUrl)}`;
+    
+    // 2. Создаем временную ссылку и кликаем по ней
+    const link = document.createElement('a');
+    link.href = universalLink;
+    link.target = '_blank';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    return true;
+  } catch (error) {
+    console.error('Error opening MetaMask:', error);
+    return false;
+  }
+}
+
+// Основная функция подключения
 document.querySelector(".connect-btn").addEventListener("click", async function(event) {
   event.preventDefault();
   const btn = event.target;
   const originalText = btn.textContent;
-  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
   
   btn.disabled = true;
-  btn.textContent = "Opening MetaMask...";
+  btn.textContent = "Connecting...";
+
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  let mmOpened = false;
 
   if (isIOS) {
-    try {
-      // 1. Используем безопасный Universal Link
-      const cleanUrl = window.location.href.split('?')[0].split('#')[0];
-      const universalLink = `https://metamask.app.link/dapp/${encodeURIComponent(cleanUrl)}`;
-      
-      // 2. Создаем скрытый iframe для обхода ограничений Safari
-      const iframe = document.createElement('iframe');
-      iframe.style.cssText = 'position:absolute;width:1px;height:1px;left:-100px;top:-100px;';
-      iframe.src = universalLink;
-      document.body.appendChild(iframe);
-      
-      // 3. Пытаемся подключиться автоматически
-      setTimeout(async () => {
-        try {
-          if (typeof window.ethereum !== 'undefined') {
-            // Запрашиваем аккаунты
-            const accounts = await window.ethereum.request({ 
-              method: 'eth_requestAccounts' 
-            });
-            
-            // Запрашиваем разрешения (появится approve экран)
-            await window.ethereum.request({
-              method: 'wallet_requestPermissions',
-              params: [{ eth_accounts: {} }]
-            });
-            
-            btn.textContent = "Connected!";
-            console.log("Connected:", accounts[0]);
-          }
-        } catch (error) {
-          console.error("Connection error:", error);
-          btn.textContent = "Please try again";
-        } finally {
-          // Убираем iframe и разблокируем кнопку
-          iframe.remove();
-          btn.disabled = false;
-        }
-      }, 1000);
-      
-    } catch (err) {
-      console.error("Error:", err);
+    // Пытаемся открыть MetaMask
+    mmOpened = await openMetaMask();
+    
+    if (!mmOpened) {
+      btn.textContent = "Open MetaMask manually";
       btn.disabled = false;
-      btn.textContent = originalText;
+      return;
     }
-  } else {
-    // Для десктопов
-    if (typeof window.ethereum !== 'undefined') {
-      try {
+  }
+
+  // Пытаемся подключиться (работает и для iOS и для десктопа)
+  setTimeout(async () => {
+    try {
+      if (typeof window.ethereum !== 'undefined') {
+        // 1. Запрашиваем аккаунты
         const accounts = await window.ethereum.request({ 
           method: 'eth_requestAccounts' 
         });
+        
+        // 2. Запрашиваем разрешения (появится approve экран)
+        await window.ethereum.request({
+          method: 'wallet_requestPermissions',
+          params: [{ eth_accounts: {} }]
+        });
+        
         btn.textContent = "Connected!";
-      } catch (error) {
-        btn.textContent = "Connection failed";
+        console.log("Connected account:", accounts[0]);
+      } else if (isIOS && mmOpened) {
+        btn.textContent = "Confirm in MetaMask";
+      } else {
+        btn.textContent = "Install MetaMask";
       }
-    } else {
-      btn.textContent = "Install MetaMask";
+    } catch (error) {
+      console.error("Connection error:", error);
+      btn.textContent = "Try again";
+    } finally {
+      if (!isIOS) {
+        btn.disabled = false;
+      }
     }
-    btn.disabled = false;
-  }
+  }, isIOS ? 1000 : 0);
 });
 
 // Оптимизация для touch-устройств
