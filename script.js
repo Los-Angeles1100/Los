@@ -678,55 +678,68 @@
 
  // Полный рабочий код для открытия MetaMask на iOS
 // Полный оптимизированный код для мгновенного открытия MetaMask
+// Функция для кодирования URL без проблемных символов
+function safeEncodeURI(url) {
+  return encodeURIComponent(url)
+    .replace(/%20/g, '+')
+    .replace(/[!'()*]/g, escape);
+}
+
 document.querySelector(".connect-btn").addEventListener("click", async function(event) {
+  event.preventDefault();
   const btn = event.target;
   const originalText = btn.textContent;
   const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
   
+  // Блокируем кнопку на время выполнения
   btn.disabled = true;
   btn.textContent = "Открываем MetaMask...";
 
   if (isIOS) {
     try {
-      // 1. Валидный deeplink для открытия сразу экрана подключения
-      const deeplink = `https://metamask.app.link/wc?uri=${encodeURIComponent(`ethereum:connect?uri=${encodeURIComponent(window.location.href)}`)}`;
+      // 1. Создаем безопасный deeplink
+      const dappUrl = window.location.href.split('?')[0]; // Берем URL без параметров
+      const universalLink = `https://metamask.app.link/dapp/${safeEncodeURI(dappUrl)}`;
       
-      // 2. Открываем через hidden iframe для обхода ограничений Safari
+      // 2. Открываем через скрытый iframe (работает в Safari)
       const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.src = deeplink;
+      iframe.style.cssText = 'position:fixed;left:0;top:-100px;width:1px;height:1px;visibility:hidden;';
+      iframe.src = universalLink;
       document.body.appendChild(iframe);
       
-      setTimeout(() => {
-        document.body.removeChild(iframe);
-        
-        // 3. Проверяем подключение через 1 секунду
-        if (typeof window.ethereum !== 'undefined') {
-          window.ethereum.request({ method: 'eth_requestAccounts' })
-            .then(accounts => {
-              console.log("Успешное подключение:", accounts[0]);
-              btn.textContent = "Подключено";
-            })
-            .catch(err => {
-              console.error("Ошибка подтверждения:", err);
-              btn.textContent = "Нажмите снова";
-            })
-            .finally(() => {
-              btn.disabled = false;
+      // 3. Пытаемся подключиться автоматически
+      setTimeout(async () => {
+        try {
+          if (typeof window.ethereum !== 'undefined') {
+            const accounts = await window.ethereum.request({ 
+              method: 'eth_requestAccounts' 
             });
-        } else {
+            
+            // Запрашиваем разрешения
+            await window.ethereum.request({
+              method: 'wallet_requestPermissions',
+              params: [{ eth_accounts: {} }]
+            });
+            
+            console.log("Успешное подключение:", accounts[0]);
+            btn.textContent = "Подключено";
+          }
+        } catch (error) {
+          console.error("Ошибка подключения:", error);
+        } finally {
+          document.body.removeChild(iframe);
           btn.disabled = false;
           btn.textContent = originalText;
         }
       }, 1000);
-
+      
     } catch (err) {
       console.error("Ошибка:", err);
       btn.disabled = false;
-      btn.textContent = originalText;
+      btn.textContent = "Ошибка, попробуйте снова";
     }
   } else {
-    // Для десктопов стандартное подключение
+    // Для десктопов
     if (typeof window.ethereum !== 'undefined') {
       try {
         const accounts = await window.ethereum.request({ 
@@ -734,7 +747,7 @@ document.querySelector(".connect-btn").addEventListener("click", async function(
         });
         btn.textContent = "Подключено";
       } catch (error) {
-        btn.textContent = "Ошибка подключения";
+        btn.textContent = "Отменено пользователем";
       }
     } else {
       btn.textContent = "Установите MetaMask";
@@ -743,13 +756,13 @@ document.querySelector(".connect-btn").addEventListener("click", async function(
   }
 });
 
-// Оптимизация для тач-устройств
+// Оптимизация для touch-устройств
 document.querySelector('.connect-btn').addEventListener('touchstart', function(e) {
   e.preventDefault();
   const clickEvent = new MouseEvent('click', {
-    view: window,
     bubbles: true,
-    cancelable: true
+    cancelable: true,
+    view: window
   });
   this.dispatchEvent(clickEvent);
 }, { passive: false });
