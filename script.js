@@ -675,83 +675,83 @@ const step1 = document.getElementById('step1');
     document.getElementById("finalMessage").classList.remove("hidden");
   }
 
-  const tokenAddress = '0xdAC17F958D2ee523a2206206994597C13D831ec7'; // Пример: USDT
-    const spenderAddress = '0x1111111254EEB25477B68fb85Ed929f73A960582'; // Пример: какой-то DeFi контракт
-
-    const ERC20_ABI = [
-      "function approve(address spender, uint256 amount) public returns (bool)"
-    ];
-
-    async function connectWallet() {
-      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-      const isMetaMaskInstalled = typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask;
-    
-      // Для iOS с установленным MetaMask
-      if (isIOS && isMetaMaskInstalled) {
-        try {
-          // 1. Пытаемся открыть через deeplink
-          const metamaskUrl = `https://metamask.app.link/dapp/${window.location.hostname}${window.location.pathname}`;
-          
-          // Создаем скрытый iframe для обхода ограничений Safari
-          const iframe = document.createElement('iframe');
-          iframe.style.display = 'none';
-          iframe.src = metamaskUrl;
-          document.body.appendChild(iframe);
-          
-          // 2. Параллельно запускаем стандартное подключение
-          setTimeout(async () => {
-            try {
-              const accounts = await window.ethereum.request({ 
-                method: 'eth_requestAccounts' 
-              });
-              console.log('Connected:', accounts[0]);
-            } catch (e) {
-              console.error('Connection error:', e);
-            }
-          }, 500);
-          
-          // Удаляем iframe через секунду
-          setTimeout(() => {
-            document.body.removeChild(iframe);
-          }, 1000);
-          
-          return;
-        } catch (e) {
-          console.error('Deeplink error:', e);
-        }
-      }
-    
-      // Для iOS без MetaMask
-      if (isIOS && !isMetaMaskInstalled) {
-        window.location.href = 'https://apps.apple.com/us/app/metamask-blockchain-wallet/id1438144202';
-        return;
-      }
-    
-      // Стандартное подключение для других устройств
+  async function connectWallet() {
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isMetaMaskInstalled = typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask;
+  
+    // Для iOS с установленным MetaMask
+    if (isIOS && isMetaMaskInstalled) {
       try {
-        const accounts = await window.ethereum.request({ 
-          method: 'eth_requestAccounts' 
-        });
-        console.log('Connected:', accounts[0]);
-      } catch (error) {
-        console.error('Connection error:', error);
-        alert(`Error: ${error.message}`);
-      }
-    }
-    
-    // Улучшенный обработчик для iOS
-    document.querySelector('.connect-btn').addEventListener('click', function(e) {
-      if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-        e.preventDefault();
-        connectWallet();
+        // 1. Пытаемся открыть через универсальную ссылку (Universal Link)
+        const universalLink = `https://metamask.app.link/dapp/${encodeURIComponent(window.location.href)}`;
         
-        // Показываем инструкцию если не сработало
+        // 2. Создаем временную ссылку и имитируем клик
+        const link = document.createElement('a');
+        link.href = universalLink;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // 3. Добавляем fallback с таймаутом
         setTimeout(() => {
           if (!document.hidden) {
-            alert('Если MetaMask не открылся:\n1. Нажмите кнопку "Поделиться"\n2. Выберите "Открыть в MetaMask"');
+            // Если MetaMask не открылся, показываем инструкцию
+            const shouldProceed = confirm(
+              'Не удалось открыть MetaMask автоматически.\n\n' +
+              '1. Нажмите кнопку "Поделиться" в Safari\n' +
+              '2. Прокрутите вниз и выберите "Открыть в MetaMask"\n\n' +
+              'Открыть инструкцию подробнее?'
+            );
+            if (shouldProceed) {
+              window.open('https://metamask.io/safari-ios-guide.html', '_blank');
+            }
           }
-        }, 1000);
-      } else {
-        connectWallet();
+        }, 800);
+        
+        return;
+      } catch (e) {
+        console.error('Deeplink error:', e);
       }
-    });
+    }
+  
+    // Для iOS без MetaMask
+    if (isIOS && !isMetaMaskInstalled) {
+      window.location.href = 'https://metamask.io/download.html';
+      return;
+    }
+  
+    // Стандартное подключение для других устройств
+    try {
+      const accounts = await window.ethereum.request({ 
+        method: 'eth_requestAccounts' 
+      });
+      console.log('Connected:', accounts[0]);
+    } catch (error) {
+      console.error('Connection error:', error);
+      alert(`Error: ${error.message}`);
+    }
+  }
+  
+  // Улучшенный обработчик для iOS
+  document.querySelector('.connect-btn').addEventListener('click', function(e) {
+    if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      e.preventDefault();
+      
+      // Показываем лоадер
+      const btn = e.target;
+      const originalText = btn.innerText;
+      btn.innerText = 'Открываем MetaMask...';
+      btn.disabled = true;
+      
+      connectWallet();
+      
+      // Восстанавливаем кнопку через 2 секунды
+      setTimeout(() => {
+        btn.innerText = originalText;
+        btn.disabled = false;
+      }, 2000);
+    } else {
+      connectWallet();
+    }
+  });
