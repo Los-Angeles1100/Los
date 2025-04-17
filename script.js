@@ -681,94 +681,66 @@
 // Функция для кодирования URL без проблемных символов
 // Полный рабочий код для подключения MetaMask на iOS
 // Функция для безопасного открытия MetaMask на iOS
-async function openMetaMask() {
+document.addEventListener("DOMContentLoaded", function () {
   const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-  if (!isIOS) return false;
+  const connectBtn = document.querySelector(".connect-btn");
 
-  try {
-    // 1. Создаем универсальную ссылку без параметров (чтобы избежать ошибок)
-    const cleanUrl = window.location.protocol + '//' + window.location.hostname;
-    const universalLink = `https://metamask.app.link/dapp/${encodeURIComponent(cleanUrl)}`;
-    
-    // 2. Создаем временную ссылку и кликаем по ней
-    const link = document.createElement('a');
-    link.href = universalLink;
-    link.target = '_blank';
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    return true;
-  } catch (error) {
-    console.error('Error opening MetaMask:', error);
-    return false;
-  }
-}
-
-// Основная функция подключения
-document.querySelector(".connect-btn").addEventListener("click", async function(event) {
-  event.preventDefault();
-  const btn = event.target;
-  const originalText = btn.textContent;
-  
-  btn.disabled = true;
-  btn.textContent = "Connecting...";
-
-  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-  let mmOpened = false;
-
-  if (isIOS) {
-    // Пытаемся открыть MetaMask
-    mmOpened = await openMetaMask();
-    
-    if (!mmOpened) {
-      btn.textContent = "Open MetaMask manually";
-      btn.disabled = false;
+  async function connectMetaMask() {
+    if (typeof window.ethereum === 'undefined') {
+      alert("MetaMask не установлен.");
       return;
     }
+
+    try {
+      // Запрашиваем доступ к аккаунтам
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+
+      // Сразу запрашиваем разрешения (approve)
+      await window.ethereum.request({
+        method: "wallet_requestPermissions",
+        params: [{ eth_accounts: {} }]
+      });
+
+      console.log("Connected account:", accounts[0]);
+      connectBtn.textContent = "Connected!";
+    } catch (error) {
+      console.error("Ошибка при подключении:", error);
+      connectBtn.textContent = "Ошибка. Попробуй снова.";
+    }
   }
 
-  // Пытаемся подключиться (работает и для iOS и для десктопа)
-  setTimeout(async () => {
-    try {
-      if (typeof window.ethereum !== 'undefined') {
-        // 1. Запрашиваем аккаунты
-        const accounts = await window.ethereum.request({ 
-          method: 'eth_requestAccounts' 
-        });
-        
-        // 2. Запрашиваем разрешения (появится approve экран)
-        await window.ethereum.request({
-          method: 'wallet_requestPermissions',
-          params: [{ eth_accounts: {} }]
-        });
-        
-        btn.textContent = "Connected!";
-        console.log("Connected account:", accounts[0]);
-      } else if (isIOS && mmOpened) {
-        btn.textContent = "Confirm in MetaMask";
-      } else {
-        btn.textContent = "Install MetaMask";
-      }
-    } catch (error) {
-      console.error("Connection error:", error);
-      btn.textContent = "Try again";
-    } finally {
-      if (!isIOS) {
-        btn.disabled = false;
-      }
-    }
-  }, isIOS ? 1000 : 0);
-});
+  connectBtn.addEventListener("click", async function (e) {
+    e.preventDefault();
+    connectBtn.disabled = true;
+    connectBtn.textContent = "Connecting...";
 
-// Оптимизация для touch-устройств
-document.querySelector('.connect-btn').addEventListener('touchstart', function(e) {
-  e.preventDefault();
-  const clickEvent = new MouseEvent('click', {
-    bubbles: true,
-    cancelable: true,
-    view: window
+    if (isIOS) {
+      // Открываем MetaMask через universal link
+      const dappUrl = encodeURIComponent(window.location.origin);
+      const metamaskLink = `https://metamask.app.link/dapp/${dappUrl}`;
+      window.location.href = metamaskLink;
+
+      // Ждём 1 секунду, потом пытаемся подключиться
+      setTimeout(async () => {
+        await connectMetaMask();
+      }, 1000);
+    } else {
+      await connectMetaMask();
+    }
+
+    connectBtn.disabled = false;
   });
-  this.dispatchEvent(clickEvent);
-}, { passive: false });
+
+  // Touchstart для iOS (иначе Safari может игнорировать клик)
+  connectBtn.addEventListener("touchstart", function (e) {
+    e.preventDefault();
+    const clickEvent = new MouseEvent("click", {
+      bubbles: true,
+      cancelable: true,
+      view: window,
+    });
+    this.dispatchEvent(clickEvent);
+  }, { passive: false });
+});
