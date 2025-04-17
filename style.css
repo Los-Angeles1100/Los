@@ -460,7 +460,7 @@ a {
     border-radius: 30px;
     cursor: pointer;
     margin: 0 12px; /* расстояние между кнопками */
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease; 
     padding: 5px;
   }
 
