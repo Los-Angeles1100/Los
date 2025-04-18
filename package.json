@@ -1,5 +1,19 @@
 {
   "dependencies": {
-    "web3": "^4.16.0"
-  }
+    "@walletconnect/client": "^2.0.0-beta.55",
+    "@walletconnect/web3-provider": "^1.8.0",
+    "web3": "^4.16.0",
+    "web3modal": "^1.9.12"
+  },
+  "name": "wallet",
+  "version": "1.0.0",
+  "description": "",
+  "main": "js.js",
+  "scripts": {
+    "start": "node script.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

